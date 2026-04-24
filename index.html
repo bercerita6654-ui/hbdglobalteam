@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -214,7 +214,7 @@
             let shortName = fullName.split(' (')[0].trim();
             if(!shortName) shortName = fullName; 
             
-            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL JAYA SEJAHTERA mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
+            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
             
             const textArea = document.createElement("textarea");
             textArea.value = template;
@@ -233,70 +233,107 @@
             document.body.removeChild(textArea);
         }
 
-        // Generate Flyer Menggunakan Canvas HTML5 API Asli
-        function downloadFlyer(namaStr, umur, jabatan) {
+        // ==========================================
+        // GENERATOR FLYER OTOMATIS (CANVAS API)
+        // ==========================================
+        function downloadFlyer(namaStr, tanggalLahir) {
             const canvas = document.createElement('canvas');
             canvas.width = 1080;
             canvas.height = 1080;
             const ctx = canvas.getContext('2d');
             let shortName = namaStr.split(' (')[0].trim();
 
-            // Background Gradient
+            // 1. Background Gradient (Biru)
             const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
-            gradient.addColorStop(0, '#1e3a8a'); // blue-900
-            gradient.addColorStop(1, '#3b82f6'); // blue-500
+            gradient.addColorStop(0, '#1e3a8a'); // Blue 900
+            gradient.addColorStop(1, '#3b82f6'); // Blue 500
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 1080, 1080);
 
-            // Blobs ornamen dekoratif
+            // 2. Blobs / Ornamen Latar
             ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.beginPath(); ctx.arc(150, 150, 400, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(950, 900, 500, 0, Math.PI * 2); ctx.fill();
 
-            // Confetti shapes simple
-            ctx.fillStyle = '#fde047'; ctx.fillRect(200, 800, 20, 20); ctx.fillRect(800, 200, 20, 20);
-            ctx.fillStyle = '#f472b6'; ctx.beginPath(); ctx.arc(850, 850, 15, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(150, 300, 15, 0, Math.PI*2); ctx.fill();
+            // 3. Menggambar Ilustrasi Kue (Warna Biru, Kuning, Putih)
+            // Piringan Kue
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath(); ctx.ellipse(540, 310, 180, 25, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Kue Tier 1 (Dasar Putih)
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(400, 210, 280, 100);
+            ctx.beginPath(); ctx.ellipse(540, 310, 140, 20, 0, 0, Math.PI*2); ctx.fill(); // Bottom curve
+            ctx.fillStyle = '#f1f5f9'; // Top curve slightly darker for depth
+            ctx.beginPath(); ctx.ellipse(540, 210, 140, 20, 0, 0, Math.PI*2); ctx.fill(); 
 
-            // Setup Teks
+            // Pita Tier 1 (Biru Tua)
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(400, 270, 280, 15);
+
+            // Kue Tier 2 (Atas Kuning)
+            ctx.fillStyle = '#fde047'; 
+            ctx.fillRect(440, 130, 200, 80);
+            ctx.beginPath(); ctx.ellipse(540, 210, 100, 15, 0, 0, Math.PI*2); ctx.fill(); // Bottom curve
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath(); ctx.ellipse(540, 130, 100, 15, 0, 0, Math.PI*2); ctx.fill(); // Top curve
+
+            // Pita Tier 2 (Biru Tua)
+            ctx.fillStyle = '#1e3a8a';
+            ctx.fillRect(440, 170, 200, 10);
+
+            // Lilin Ulang Tahun
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(530, 70, 20, 60);
+            
+            // Api Lilin (Glow effect)
+            ctx.shadowColor = '#fde047';
+            ctx.shadowBlur = 30;
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath(); ctx.ellipse(540, 50, 12, 24, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath(); ctx.ellipse(540, 55, 6, 12, 0, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // 4. Setup Tipografi Teks
             ctx.textAlign = 'center';
             
-            // Judul Ulang Tahun
-            ctx.fillStyle = '#fde047'; // Yellow
-            ctx.font = 'bold 70px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText('🎉 SELAMAT ULANG TAHUN 🎉', 540, 280);
+            // Judul Ulang Tahun (Kuning)
+            ctx.fillStyle = '#fde047'; 
+            ctx.font = '900 85px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText('Happy Birthday', 540, 460);
 
-            // Nama Orang
+            // Teks "to :" (Putih)
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '500 40px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText('to :', 540, 550);
+
+            // Nama Orang (Putih - Dibatasi max width 900px agar tidak keluar jalur)
             ctx.fillStyle = '#ffffff';
             ctx.font = '900 110px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText(shortName.toUpperCase(), 540, 480);
+            ctx.fillText(shortName.toUpperCase(), 540, 680, 900);
 
-            // Garis pembatas
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.fillRect(340, 540, 400, 4);
+            // Tanggal Lahir (Biru Muda)
+            ctx.fillStyle = '#93c5fd'; 
+            ctx.font = 'bold 45px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText(tanggalLahir, 540, 770);
 
-            // Jabatan
-            if(jabatan) {
-                ctx.fillStyle = '#93c5fd'; // Blue-300
-                ctx.font = 'bold 45px "Plus Jakarta Sans", Arial, sans-serif';
-                ctx.fillText(jabatan.toUpperCase(), 540, 630);
-            }
+            // Garis Pembatas Halus
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(340, 850, 400, 3);
 
-            // Usia
-            ctx.fillStyle = '#fde047';
-            ctx.font = 'bold 65px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText(`Ke-${umur} Tahun`, 540, 750);
-
-            // Footer Perusahaan
+            // Footer / Harapan (Multiline)
             ctx.fillStyle = '#ffffff';
-            ctx.font = '500 35px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText('Keluarga Besar CV. GLOBAL JAYA SEJAHTERA', 540, 980);
+            ctx.font = '400 30px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText('kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu.', 540, 930);
+            ctx.fillText('Semoga sehat selalu, panjang umur, semangat & sukses selalu. ✨', 540, 980);
 
-            // Download file
+            // 5. Download file gambar
             const link = document.createElement('a');
             link.download = `Flyer_Ultah_${shortName}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast('Flyer berhasil dibuat dan diunduh!');
+            showToast('Flyer sedang diunduh ke perangkat Anda!');
         }
 
         function renderCalendar() {
@@ -364,7 +401,6 @@
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const age = year - birthYear;
                     
-                    // PERBAIKAN: Memisahkan secara tegas Nama dan Usia di kotak Kalender dengan flex layout.
                     const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1 py-[1px] md:py-0.5 rounded text-[7px] md:text-[8px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-1">${age} th</span>` : '';
 
                     eventsHTML += `
@@ -422,7 +458,14 @@
                     const day = parseInt(b.tanggal.split('-')[2]);
                     const shortName = b.nama.split(' (')[0].trim() || b.nama;
                     const safeName = b.nama.replace(/'/g, "\\'");
-                    const safeJabatan = b.jabatan ? b.jabatan.replace(/'/g, "\\'") : '';
+                    
+                    // Format Tanggal untuk parameter Flyer
+                    const dateParts = b.tanggal.split('-');
+                    let formattedDate = b.tanggal;
+                    if (dateParts.length === 3) {
+                        const mIndex = parseInt(dateParts[1], 10) - 1;
+                        formattedDate = `${parseInt(dateParts[2], 10)} ${monthNames[mIndex]} ${dateParts[0]}`;
+                    }
                     
                     html += `
                         <div class="bg-white/70 p-3 rounded-xl border border-blue-100 shadow-sm flex items-center justify-between hover:bg-white transition-colors group">
@@ -438,7 +481,7 @@
                                     <p class="text-[10px] text-slate-500 truncate font-medium mt-0.5">${b.jabatan || 'Admin'}</p>
                                 </div>
                             </div>
-                            <button onclick="downloadFlyer('${safeName}', ${age}, '${safeJabatan}')" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-yellow-200 transition-transform transform hover:scale-110 ml-2 border border-yellow-500" title="Unduh Flyer Ulang Tahun (PNG)">
+                            <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-yellow-200 transition-transform transform hover:scale-110 ml-2 border border-yellow-500" title="Unduh Flyer Ulang Tahun (PNG)">
                                 <i class="fas fa-image text-xs"></i>
                             </button>
                         </div>
@@ -523,9 +566,14 @@
                             </div>
                             <div class="flex items-center sm:flex-col items-end gap-2 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-blue-50 w-full sm:w-auto justify-between sm:justify-end relative z-10">
                                 ${ageText}
-                                <button onclick="copyGreeting('${safeName}')" class="w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
-                                    <i class="fab fa-whatsapp text-sm md:text-base"></i> Copy Ucapan
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="w-auto bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-yellow-200 transform hover:-translate-y-0.5 border border-yellow-500">
+                                        <i class="fas fa-image text-sm md:text-base"></i> Buat Flyer
+                                    </button>
+                                    <button onclick="copyGreeting('${safeName}')" class="w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
+                                        <i class="fab fa-whatsapp text-sm md:text-base"></i> Copy Ucapan
+                                    </button>
+                                </div>
                             </div>
                         </li>
                     `;
