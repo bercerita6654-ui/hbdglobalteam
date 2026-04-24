@@ -25,6 +25,10 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Garansi tinggi kotak kalender agar nama TIDAK PERNAH terpotong atau menghilang */
+        .calendar-cell { min-height: 85px; }
+        @media (min-width: 768px) { .calendar-cell { min-height: 120px; } }
+
         @keyframes soft-pulse {
             0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
             50% { opacity: 0.9; transform: scale(0.95); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
@@ -49,26 +53,26 @@
         }
     </style>
 </head>
-<body class="text-slate-800 h-screen w-screen flex flex-col overflow-hidden relative z-0">
+<body class="text-slate-800 min-h-screen w-full flex flex-col relative z-0 bg-slate-50 overflow-x-hidden">
 
     <!-- Elemen tersembunyi untuk memaksa browser memuat font Pacifico sebelum Canvas digambar -->
     <div style="font-family: 'Pacifico', cursive; position: absolute; opacity: 0; pointer-events: none;">.</div>
 
     <!-- Latar Belakang Animasi -->
-    <div class="fixed inset-0 z-[-1] bg-slate-50 overflow-hidden">
+    <div class="fixed inset-0 z-[-1] overflow-hidden">
         <div class="absolute top-0 -left-4 w-72 h-72 md:w-96 md:h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
         <div class="absolute top-0 -right-4 w-72 h-72 md:w-96 md:h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
         <div class="absolute -bottom-8 left-20 w-72 h-72 md:w-96 md:h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-4000"></div>
     </div>
 
     <!-- Header -->
-    <header class="mx-2 md:mx-4 mt-2 md:mt-4 glass-panel shadow-lg shadow-blue-100/50 rounded-2xl px-4 md:px-6 py-2 md:py-3 flex justify-between items-center z-20 shrink-0 border-b border-blue-100">
+    <header class="mx-3 md:mx-6 mt-3 md:mt-4 glass-panel shadow-lg shadow-blue-100/50 rounded-2xl px-4 md:px-6 py-2.5 md:py-4 flex flex-wrap md:flex-nowrap justify-between items-center z-20 shrink-0 border-b border-blue-100 gap-3">
         <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-tr from-blue-500 to-blue-700 text-white p-2 rounded-xl shadow-md shadow-blue-200">
-                <i class="fas fa-birthday-cake text-base md:text-xl text-yellow-300 animate-bounce" style="animation-duration: 2.5s;"></i>
+            <div class="bg-gradient-to-tr from-blue-500 to-blue-700 text-white p-2.5 rounded-xl shadow-md shadow-blue-200">
+                <i class="fas fa-birthday-cake text-lg md:text-xl text-yellow-300 animate-bounce" style="animation-duration: 2.5s;"></i>
             </div>
             <div>
-                <h1 class="text-base md:text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-600 leading-tight">Kalender Ultah Admin</h1>
+                <h1 class="text-lg md:text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-600 leading-tight">Kalender Ultah Admin</h1>
                 <p class="text-[10px] md:text-xs font-bold text-blue-500/80 uppercase tracking-wide">CV. GLOBAL JAYA SEJAHTERA</p>
             </div>
         </div>
@@ -84,50 +88,52 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 w-full p-2 md:p-4 flex flex-col lg:flex-row items-stretch overflow-y-auto lg:overflow-hidden min-h-0 gap-3 md:gap-4">
+    <!-- Menghilangkan restriksi overflow agar bisa di-scroll secara alami -->
+    <main class="flex-1 w-full max-w-[1600px] mx-auto p-3 md:p-6 flex flex-col lg:flex-row items-start gap-4 md:gap-6 relative z-10 pb-12">
         
         <!-- Bagian Kiri: Kalender Utama -->
-        <div class="flex-1 glass-panel rounded-3xl shadow-2xl shadow-blue-200/40 flex flex-col min-h-[500px] lg:min-h-0 overflow-hidden border border-white">
+        <div class="flex-1 w-full glass-panel rounded-3xl shadow-2xl shadow-blue-200/40 flex flex-col border border-white">
             
-            <div class="flex justify-between items-center p-2.5 md:p-4 border-b border-blue-100 bg-white/40 shrink-0">
-                <button onclick="changeMonth(-1)" class="p-1.5 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
-                    <i class="fas fa-chevron-left text-xs md:text-sm"></i>
+            <div class="flex justify-between items-center p-3 md:p-5 border-b border-blue-100 bg-white/40">
+                <button onclick="changeMonth(-1)" class="p-2 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-9 w-9 md:h-11 md:w-11 flex items-center justify-center transform hover:scale-105">
+                    <i class="fas fa-chevron-left text-sm"></i>
                 </button>
                 <div class="text-center">
-                    <h2 id="monthYearDisplay" class="text-lg md:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 capitalize tracking-tight drop-shadow-sm">Bulan Tahun</h2>
+                    <h2 id="monthYearDisplay" class="text-xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 capitalize tracking-tight drop-shadow-sm">Bulan Tahun</h2>
                 </div>
-                <button onclick="changeMonth(1)" class="p-1.5 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
-                    <i class="fas fa-chevron-right text-xs md:text-sm"></i>
+                <button onclick="changeMonth(1)" class="p-2 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-9 w-9 md:h-11 md:w-11 flex items-center justify-center transform hover:scale-105">
+                    <i class="fas fa-chevron-right text-sm"></i>
                 </button>
             </div>
 
-            <div class="p-2 md:p-4 flex-1 flex flex-col min-h-0 overflow-hidden bg-white/30">
-                <div class="grid grid-cols-7 gap-1 md:gap-2 mb-1.5 md:mb-2 shrink-0">
-                    <div class="text-center font-bold text-rose-500 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Min</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Sen</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Sel</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Rab</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Kam</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Jum</div>
-                    <div class="text-center font-bold text-yellow-600 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Sab</div>
+            <div class="p-2 md:p-5 flex-1 flex flex-col bg-white/30">
+                <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+                    <div class="text-center font-bold text-rose-500 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Min</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Sen</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Sel</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Rab</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Kam</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Jum</div>
+                    <div class="text-center font-bold text-yellow-600 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1.5 shadow-sm border border-blue-50">Sab</div>
                 </div>
 
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2 flex-1 min-h-0 h-full">
+                <!-- Grid kalender dengan auto-rows agar tingginya selaras dan proporsional -->
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2 auto-rows-fr">
                     <!-- JS mengisi ini -->
                 </div>
             </div>
         </div>
 
         <!-- Bagian Kanan: List Ulang Tahun Bulan Ini -->
-        <aside class="w-full lg:w-80 shrink-0 glass-panel rounded-3xl shadow-xl shadow-blue-200/30 flex flex-col h-[400px] lg:h-full border border-white overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-700 to-blue-600 p-4 border-b border-blue-500 shrink-0 flex items-center gap-3">
-                <div class="bg-yellow-300 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-inner shrink-0">
+        <aside class="w-full lg:w-[350px] shrink-0 glass-panel rounded-3xl shadow-xl shadow-blue-200/30 flex flex-col border border-white lg:sticky lg:top-6" style="max-height: calc(100vh - 2rem);">
+            <div class="bg-gradient-to-r from-blue-700 to-blue-600 p-4 md:p-5 border-b border-blue-500 shrink-0 flex items-center gap-3 rounded-t-3xl">
+                <div class="bg-yellow-300 text-blue-900 w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-inner shrink-0">
                     <i class="fas fa-list-ul"></i>
                 </div>
-                <h3 class="font-extrabold text-white tracking-wide text-sm md:text-base">Ultah Bulan Ini</h3>
+                <h3 class="font-extrabold text-white tracking-wide text-base md:text-lg">Ultah Bulan Ini</h3>
             </div>
             
-            <div id="sidebarContent" class="flex-1 p-3 md:p-4 overflow-y-auto bg-white/40 space-y-2">
+            <div id="sidebarContent" class="p-3 md:p-4 overflow-y-auto bg-white/40 space-y-3 flex-1 custom-scrollbar">
                 <!-- JS mengisi ini -->
             </div>
         </aside>
@@ -215,53 +221,70 @@
         }
 
         // ==========================================
+        // COPY TEXT WA SAJA (KEMBALI KE FUNGSI AWAL)
+        // ==========================================
+        function copyGreeting(namaStr) {
+            let shortName = namaStr.split(' (')[0].trim();
+            if(!shortName) shortName = namaStr; 
+            
+            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = template;
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast(`Teks ucapan untuk ${shortName} disalin!`);
+            } catch (err) {
+                alert('Browser Anda tidak mendukung fitur copy otomatis.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // ==========================================
         // GENERATOR FLYER OTOMATIS (CANVAS API)
         // ==========================================
         async function getFlyerCanvas(namaStr, tanggalLahir) {
-            // Memastikan font telah ter-load sebelum Canvas menggambar teks
             await document.fonts.ready;
-
             const canvas = document.createElement('canvas');
             canvas.width = 1080;
             canvas.height = 1080;
             const ctx = canvas.getContext('2d');
             
-            // Ekstrak nama lengkap dari dalam kurung
             let fullName = namaStr;
             const match = namaStr.match(/\(([^)]+)\)/);
-            if (match) {
-                fullName = match[1].trim();
-            }
+            if (match) fullName = match[1].trim();
 
-            // Ganti Tahun Lahir menjadi Tahun Berjalan (Tahun Hari Ini)
             const currentYear = new Date().getFullYear();
             const flyerDate = tanggalLahir.trim().replace(/\d{4}$/, currentYear);
 
-            // 1. Background Gradient (Biru)
+            // Background
             const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
-            gradient.addColorStop(0, '#1e3a8a'); // Blue 900
-            gradient.addColorStop(1, '#3b82f6'); // Blue 500
+            gradient.addColorStop(0, '#1e3a8a');
+            gradient.addColorStop(1, '#3b82f6');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 1080, 1080);
 
-            // 2. Blobs / Ornamen Latar
+            // Blobs Latar
             ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.beginPath(); ctx.arc(150, 150, 400, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(950, 900, 500, 0, Math.PI * 2); ctx.fill();
 
-            // 3. Menggambar Ilustrasi Kue (Warna Biru, Kuning, Putih)
-            // Piringan Kue
+            // Kue Lapis 1
             ctx.fillStyle = 'rgba(255,255,255,0.2)';
             ctx.beginPath(); ctx.ellipse(540, 310, 180, 25, 0, 0, Math.PI*2); ctx.fill();
-            
-            // Kue Tier 1 (Dasar Putih)
             ctx.fillStyle = '#ffffff'; 
             ctx.fillRect(400, 210, 280, 100);
-            ctx.beginPath(); ctx.ellipse(540, 310, 140, 20, 0, 0, Math.PI*2); ctx.fill(); // Bottom curve
-            ctx.fillStyle = '#f1f5f9'; // Top curve slightly darker for depth
+            ctx.beginPath(); ctx.ellipse(540, 310, 140, 20, 0, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = '#f1f5f9'; 
             ctx.beginPath(); ctx.ellipse(540, 210, 140, 20, 0, 0, Math.PI*2); ctx.fill(); 
 
-            // Simulasikan Logo Global Mart melengkung di kue tier 1
+            // Logo Simulasian
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(415, 230);
@@ -269,98 +292,71 @@
             ctx.lineTo(665, 280);
             ctx.quadraticCurveTo(540, 305, 415, 280);
             ctx.closePath();
-            ctx.fillStyle = '#ffff00'; // Kuning Logo
+            ctx.fillStyle = '#ffff00'; 
             ctx.fill();
-            
-            // Teks Logo
             ctx.textAlign = 'center';
-            ctx.fillStyle = '#0000ff'; // Biru tulisan GLOBAL MART
+            ctx.fillStyle = '#0000ff';
             ctx.font = '900 32px "Arial Black", Arial, sans-serif';
             ctx.fillText('GLOBAL MART', 540, 265);
-            ctx.fillStyle = '#ff0000'; // Merah tulisan bawahnya
+            ctx.fillStyle = '#ff0000'; 
             ctx.font = '900 11px "Arial Black", Arial, sans-serif';
             ctx.fillText('ALAT TULIS KANTOR & SEKOLAH', 540, 283);
             ctx.restore();
 
-            // Kue Tier 2 (Atas Kuning)
+            // Kue Lapis 2
             ctx.fillStyle = '#fde047'; 
             ctx.fillRect(440, 130, 200, 80);
-            ctx.beginPath(); ctx.ellipse(540, 210, 100, 15, 0, 0, Math.PI*2); ctx.fill(); // Bottom curve
+            ctx.beginPath(); ctx.ellipse(540, 210, 100, 15, 0, 0, Math.PI*2); ctx.fill(); 
             ctx.fillStyle = '#fef08a';
-            ctx.beginPath(); ctx.ellipse(540, 130, 100, 15, 0, 0, Math.PI*2); ctx.fill(); // Top curve
-
-            // Pita Tier 2 (Biru Tua)
+            ctx.beginPath(); ctx.ellipse(540, 130, 100, 15, 0, 0, Math.PI*2); ctx.fill(); 
             ctx.fillStyle = '#1e3a8a';
             ctx.fillRect(440, 170, 200, 10);
 
-            // Lilin Ulang Tahun
+            // Lilin
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(530, 70, 20, 60);
-            
-            // Api Lilin (Glow effect)
             ctx.shadowColor = '#fde047';
             ctx.shadowBlur = 30;
             ctx.fillStyle = '#f97316';
             ctx.beginPath(); ctx.ellipse(540, 50, 12, 24, 0, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#fde047';
             ctx.beginPath(); ctx.ellipse(540, 55, 6, 12, 0, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0; // Reset shadow
+            ctx.shadowBlur = 0; 
 
-            // 4. Setup Tipografi Teks
+            // Tipografi
             ctx.textAlign = 'center';
-            
-            // Judul Ulang Tahun (Kuning) - Font Handwriting (Pacifico)
             ctx.fillStyle = '#fde047'; 
             ctx.font = '400 110px "Pacifico", cursive';
             ctx.fillText('Happy Birthday', 540, 460);
-
-            // Teks "to :" (Putih)
             ctx.fillStyle = '#ffffff';
             ctx.font = '500 35px "Plus Jakarta Sans", Arial, sans-serif';
             ctx.fillText('to :', 540, 530);
-
-            // Nama Orang Lengkap (Putih - Dibatasi max width 900px agar tidak keluar jalur)
-            ctx.fillStyle = '#ffffff';
             ctx.font = '900 85px "Plus Jakarta Sans", Arial, sans-serif';
             ctx.fillText(fullName.toUpperCase(), 540, 640, 900);
-
-            // Tanggal Lahir dengan Tahun Berjalan (Biru Muda)
             ctx.fillStyle = '#93c5fd'; 
             ctx.font = 'bold 40px "Plus Jakarta Sans", Arial, sans-serif';
             ctx.fillText(flyerDate, 540, 720);
 
-            // Garis Pembatas Halus
+            // Footer
             ctx.fillStyle = 'rgba(255,255,255,0.2)';
             ctx.fillRect(340, 810, 400, 3);
-
-            // Footer / Harapan (Multiline sesuai instruksi)
             ctx.fillStyle = '#ffffff';
             ctx.font = '400 30px "Plus Jakarta Sans", Arial, sans-serif';
             ctx.fillText('kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu.', 540, 890);
             ctx.fillText('Semoga sehat selalu, panjang umur, semangat & sukses selalu. ✨', 540, 940);
 
-            // 6. Logo Instagram & Username
+            // Logo Instagram
             ctx.save();
-            const igX = 430; 
-            const igY = 1010;
-            
-            // Ikon IG Box
+            const igX = 430, igY = 1010;
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3;
             ctx.lineJoin = 'round';
             ctx.beginPath();
-            if(ctx.roundRect) {
-                ctx.roundRect(igX - 16, igY - 16, 32, 32, 8);
-            } else {
-                ctx.rect(igX - 16, igY - 16, 32, 32);
-            }
+            if(ctx.roundRect) ctx.roundRect(igX - 16, igY - 16, 32, 32, 8);
+            else ctx.rect(igX - 16, igY - 16, 32, 32);
             ctx.stroke();
-            // Inner circle
             ctx.beginPath(); ctx.arc(igX, igY, 8, 0, Math.PI * 2); ctx.stroke();
-            // Dot
             ctx.beginPath(); ctx.arc(igX + 8, igY - 8, 1.5, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
-
-            // Teks IG
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#ffffff';
@@ -371,80 +367,6 @@
             return canvas;
         }
 
-        // ==========================================
-        // COPY TEXT & GAMBAR BERSAMAAN KE WA 
-        // Menggunakan Web Share API & Clipboard Fallback
-        // ==========================================
-        async function copyGreeting(namaStr, tanggalLahir) {
-            let shortName = namaStr.split(' (')[0].trim();
-            if(!shortName) shortName = namaStr; 
-            
-            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
-            
-            // Fungsi Cadangan: Hanya copy teks jika sistem menolak gambar
-            const fallbackCopyText = () => {
-                const textArea = document.createElement("textarea");
-                textArea.value = template;
-                textArea.style.position = "fixed";
-                textArea.style.opacity = "0";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast(`Hanya teks ucapan yang disalin. (Browser memblokir gambar)`);
-                } catch (err) {
-                    alert('Browser Anda tidak mendukung fitur copy otomatis.');
-                }
-                document.body.removeChild(textArea);
-            };
-
-            try {
-                // Buat Gambar Flyer
-                const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
-                
-                canvas.toBlob(async (blob) => {
-                    const file = new File([blob], `Flyer_Ultah_${shortName}.png`, { type: 'image/png' });
-                    
-                    // 1. Coba Web Share API (Sangat sempurna untuk perangkat mobile & PWA)
-                    // Akan membuka popup bagikan ke WA langsung dengan gambar + caption
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                files: [file],
-                                text: template, // Teks ini akan otomatis jadi caption di WA
-                                title: 'Ucapan Ulang Tahun'
-                            });
-                            showToast(`Berhasil dibagikan ke WhatsApp!`);
-                            return; // Jika berhasil, hentikan fungsi
-                        } catch (err) {
-                            console.log("Share dibatalkan pengguna atau gagal, mencoba copy clipboard...", err);
-                        }
-                    }
-
-                    // 2. Fallback: Copy ke Clipboard sistem (Untuk pengguna PC / Web biasa)
-                    try {
-                        const data = [new ClipboardItem({
-                            [blob.type]: blob,
-                            'text/plain': new Blob([template], { type: 'text/plain' })
-                        })];
-                        await navigator.clipboard.write(data);
-                        
-                        showToast(`Gambar Flyer & Teks disalin! Silakan Paste (Ctrl+V) di WhatsApp.`);
-                    } catch (err) {
-                        console.warn("Clipboard tingkat lanjut gagal, fallback ke copy text biasa.", err);
-                        fallbackCopyText();
-                    }
-                }, 'image/png');
-            } catch(e) {
-                console.error(e);
-                fallbackCopyText();
-            }
-        }
-
-        // ==========================================
-        // DOWNLOAD GAMBAR SAJA (TOMBOL KUNING)
-        // ==========================================
         async function downloadFlyer(namaStr, tanggalLahir) {
             const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
             let fullName = namaStr;
@@ -458,6 +380,9 @@
             showToast('Flyer berhasil dibuat dan diunduh!');
         }
 
+        // ==========================================
+        // RENDER KALENDER (DENGAN SCROLL & BOX LEGA)
+        // ==========================================
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -469,9 +394,6 @@
             
             const calendarGrid = document.getElementById('calendarGrid');
             calendarGrid.innerHTML = ''; 
-
-            const rowsCount = Math.ceil((firstDayOfMonth + daysInMonth) / 7);
-            calendarGrid.style.gridTemplateRows = `repeat(${rowsCount}, minmax(0, 1fr))`;
 
             for (let i = 0; i < firstDayOfMonth; i++) {
                 const emptyCell = document.createElement('div');
@@ -495,14 +417,14 @@
 
                 const cell = document.createElement('div');
                 
-                let cellClasses = "calendar-cell rounded-lg md:rounded-xl p-1 md:p-2 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden min-h-0 ";
+                let cellClasses = "calendar-cell rounded-lg md:rounded-2xl p-1.5 md:p-2.5 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden bg-white/80 ";
                 
                 if (isToday) {
-                    cellClasses += "bg-white border-blue-400 shadow-lg shadow-blue-200/50 ring-2 ring-blue-500 z-10";
+                    cellClasses += "border-blue-400 shadow-lg shadow-blue-200/50 ring-2 ring-blue-500 z-10";
                 } else if (daysBirthdays.length > 0) {
                     cellClasses += "bg-yellow-50/90 border-yellow-300 hover:border-yellow-400 hover:shadow-xl hover:shadow-yellow-200/50 hover:-translate-y-1 z-0 hover:z-10";
                 } else {
-                    cellClasses += "bg-white/80 border-white hover:bg-white hover:border-blue-200 hover:shadow-md z-0";
+                    cellClasses += "border-white hover:bg-white hover:border-blue-200 hover:shadow-md z-0";
                 }
 
                 cell.className = cellClasses;
@@ -510,11 +432,11 @@
 
                 const decorHTML = daysBirthdays.length > 0 ? `<div class="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-yellow-400/30 text-3xl md:text-5xl transform -rotate-12 pointer-events-none transition-transform group-hover:scale-110 group-hover:text-yellow-400/50"><i class="fas fa-gift"></i></div>` : '';
 
-                let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative shrink-0 mb-0.5 md:mb-1">
-                    <span class="${isToday ? 'bg-blue-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-md md:rounded-lg shadow-md today-pulse text-[10px] md:text-xs' : 'text-blue-900 ml-0.5 mt-0.5 text-[11px] md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
+                let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative shrink-0 mb-1">
+                    <span class="${isToday ? 'bg-blue-600 text-white w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg shadow-md today-pulse text-[11px] md:text-sm' : 'text-blue-900 ml-1 mt-1 text-xs md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
                 </div>`;
 
-                let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 overflow-hidden z-10 relative min-h-0 w-full mt-0.5">`;
+                let eventsHTML = `<div class="flex flex-col gap-1 z-10 relative w-full">`;
                 
                 const maxDisplay = 2;
                 
@@ -523,13 +445,13 @@
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const age = year - birthYear;
                     
-                    const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1 py-[1px] md:py-0.5 rounded text-[7px] md:text-[8px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-1">${age} th</span>` : '';
+                    const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1.5 py-0.5 rounded text-[8px] md:text-[10px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-1">${age} th</span>` : '';
 
                     eventsHTML += `
-                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded md:rounded-md shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-center shrink-0 overflow-hidden">
+                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1.5 md:px-2 py-1 md:py-1.5 rounded-md shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-center shrink-0">
                             <div class="flex items-center gap-1 min-w-0 flex-1">
-                                <i class="fas fa-birthday-cake text-yellow-300 text-[8px] md:text-[10px] shrink-0"></i>
-                                <span class="truncate text-[8px] md:text-[10px] leading-tight font-bold">${shortName}</span>
+                                <i class="fas fa-birthday-cake text-yellow-300 text-[9px] md:text-[11px] shrink-0"></i>
+                                <span class="truncate text-[9px] md:text-[12px] leading-tight font-bold">${shortName}</span>
                             </div>
                             ${ageHTML}
                         </div>
@@ -537,7 +459,7 @@
                 });
                 
                 if (daysBirthdays.length > maxDisplay) {
-                    eventsHTML += `<div class="text-[8px] md:text-[9px] text-blue-800 font-extrabold text-center mt-auto bg-white/60 rounded py-0.5 shadow-sm">+${daysBirthdays.length - maxDisplay} lagi</div>`;
+                    eventsHTML += `<div class="text-[9px] md:text-[11px] text-blue-800 font-extrabold text-center mt-1 bg-white/60 rounded py-0.5 shadow-sm">+${daysBirthdays.length - maxDisplay} lagi</div>`;
                 }
                 
                 eventsHTML += `</div>`;
@@ -546,7 +468,6 @@
                 calendarGrid.appendChild(cell);
             }
             
-            // Panggil render Sidebar setelah Kalender selesai
             renderSidebar(month, year);
         }
 
@@ -556,10 +477,8 @@
             const monthStr = String(month + 1).padStart(2, '0');
             const filterStr = `-${monthStr}-`;
             
-            // Ambil semua data ultah bulan ini
             const monthBirthdays = birthdays.filter(b => b.tanggal && b.tanggal.includes(filterStr));
             
-            // Urutkan berdasarkan tanggal hari
             monthBirthdays.sort((a, b) => {
                 const dayA = parseInt(a.tanggal.split('-')[2]);
                 const dayB = parseInt(b.tanggal.split('-')[2]);
@@ -581,7 +500,6 @@
                     const shortName = b.nama.split(' (')[0].trim() || b.nama;
                     const safeName = b.nama.replace(/'/g, "\\'");
                     
-                    // Format Tanggal untuk parameter Flyer
                     const dateParts = b.tanggal.split('-');
                     let formattedDate = b.tanggal;
                     if (dateParts.length === 3) {
@@ -590,7 +508,7 @@
                     }
                     
                     html += `
-                        <div class="bg-white/70 p-3 rounded-xl border border-blue-100 shadow-sm flex items-center justify-between hover:bg-white transition-colors group">
+                        <div class="bg-white/70 p-3 rounded-xl border border-blue-100 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between hover:bg-white transition-colors group gap-3">
                             <div class="flex items-center gap-3 overflow-hidden min-w-0">
                                 <div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white w-10 h-10 rounded-lg flex shrink-0 items-center justify-center font-bold shadow-md">
                                     ${day}
@@ -603,12 +521,12 @@
                                     <p class="text-[10px] text-slate-500 truncate font-medium mt-0.5">${b.jabatan || 'Admin'}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
-                                <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-yellow-200 transition-transform transform hover:scale-110 border border-yellow-500" title="Unduh Flyer Ulang Tahun (PNG)">
-                                    <i class="fas fa-image text-xs"></i>
+                            <div class="flex items-center gap-1.5 shrink-0 self-end xl:self-auto">
+                                <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-yellow-200 transition-transform transform hover:scale-105 border border-yellow-500 gap-1.5">
+                                    <i class="fas fa-image"></i> Flyer
                                 </button>
-                                <button onclick="copyGreeting('${safeName}', '${formattedDate}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-110 border border-[#1DA851]" title="Copy Gambar & Ucapan WA">
-                                    <i class="fab fa-whatsapp text-xs"></i>
+                                <button onclick="copyGreeting('${safeName}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-105 border border-[#1DA851] gap-1.5">
+                                    <i class="fab fa-whatsapp"></i> Text
                                 </button>
                             </div>
                         </div>
@@ -640,7 +558,7 @@
             }, 300); 
         }
 
-        // Tampilan Modal Detail Hari - Tema Biru Kuning
+        // Tampilan Modal Detail Hari
         function showDayDetails(day, monthName, daysBirthdays) {
             document.getElementById('dayModalTitle').innerText = `${day} ${monthName}`;
             const content = document.getElementById('dayModalContent');
@@ -695,10 +613,10 @@
                                 ${ageText}
                                 <div class="flex items-center gap-2">
                                     <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="w-auto bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-yellow-200 transform hover:-translate-y-0.5 border border-yellow-500">
-                                        <i class="fas fa-image text-sm md:text-base"></i> Buat Flyer
+                                        <i class="fas fa-image text-sm md:text-base"></i> Flyer
                                     </button>
-                                    <button onclick="copyGreeting('${safeName}', '${formattedDate}')" class="w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
-                                        <i class="fab fa-whatsapp text-sm md:text-base"></i> Copy Ucapan
+                                    <button onclick="copyGreeting('${safeName}')" class="w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
+                                        <i class="fab fa-whatsapp text-sm md:text-base"></i> Teks
                                     </button>
                                 </div>
                             </div>
