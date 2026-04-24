@@ -8,7 +8,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        /* Menambahkan font Pacifico untuk efek handwriting Happy Birthday */
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -49,6 +50,9 @@
     </style>
 </head>
 <body class="text-slate-800 h-screen w-screen flex flex-col overflow-hidden relative z-0">
+
+    <!-- Elemen tersembunyi untuk memaksa browser memuat font Pacifico sebelum Canvas digambar -->
+    <div style="font-family: 'Pacifico', cursive; position: absolute; opacity: 0; pointer-events: none;">.</div>
 
     <!-- Latar Belakang Animasi -->
     <div class="fixed inset-0 z-[-1] bg-slate-50 overflow-hidden">
@@ -236,12 +240,25 @@
         // ==========================================
         // GENERATOR FLYER OTOMATIS (CANVAS API)
         // ==========================================
-        function downloadFlyer(namaStr, tanggalLahir) {
+        async function downloadFlyer(namaStr, tanggalLahir) {
+            // Memastikan font telah ter-load sebelum Canvas menggambar teks
+            await document.fonts.ready;
+
             const canvas = document.createElement('canvas');
             canvas.width = 1080;
             canvas.height = 1080;
             const ctx = canvas.getContext('2d');
-            let shortName = namaStr.split(' (')[0].trim();
+            
+            // Ekstrak nama lengkap dari dalam kurung (atau gunakan nama asli jika tidak ada kurung)
+            let fullName = namaStr;
+            const match = namaStr.match(/\(([^)]+)\)/);
+            if (match) {
+                fullName = match[1].trim();
+            }
+
+            // Ganti Tahun Lahir menjadi Tahun Berjalan
+            const currentYear = new Date().getFullYear();
+            const flyerDate = tanggalLahir.trim().replace(/\d{4}$/, currentYear);
 
             // 1. Background Gradient (Biru)
             const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
@@ -298,42 +315,42 @@
             // 4. Setup Tipografi Teks
             ctx.textAlign = 'center';
             
-            // Judul Ulang Tahun (Kuning)
+            // Judul Ulang Tahun (Kuning) - Font Handwriting (Pacifico)
             ctx.fillStyle = '#fde047'; 
-            ctx.font = '900 85px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.font = '400 110px "Pacifico", cursive';
             ctx.fillText('Happy Birthday', 540, 460);
 
             // Teks "to :" (Putih)
             ctx.fillStyle = '#ffffff';
             ctx.font = '500 40px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText('to :', 540, 550);
+            ctx.fillText('to :', 540, 540);
 
-            // Nama Orang (Putih - Dibatasi max width 900px agar tidak keluar jalur)
+            // Nama Orang Lengkap (Putih - Dibatasi max width 900px agar tidak keluar jalur)
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 110px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText(shortName.toUpperCase(), 540, 680, 900);
+            ctx.font = '900 85px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText(fullName.toUpperCase(), 540, 650, 900);
 
-            // Tanggal Lahir (Biru Muda)
+            // Tanggal Lahir dengan Tahun Berjalan (Biru Muda)
             ctx.fillStyle = '#93c5fd'; 
             ctx.font = 'bold 45px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText(tanggalLahir, 540, 770);
+            ctx.fillText(flyerDate, 540, 740);
 
             // Garis Pembatas Halus
             ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.fillRect(340, 850, 400, 3);
+            ctx.fillRect(340, 820, 400, 3);
 
-            // Footer / Harapan (Multiline)
+            // Footer / Harapan (Multiline sesuai instruksi)
             ctx.fillStyle = '#ffffff';
             ctx.font = '400 30px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText('kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu.', 540, 930);
-            ctx.fillText('Semoga sehat selalu, panjang umur, semangat & sukses selalu. ✨', 540, 980);
+            ctx.fillText('kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu.', 540, 900);
+            ctx.fillText('Semoga sehat selalu, panjang umur, semangat & sukses selalu. ✨', 540, 950);
 
             // 5. Download file gambar
             const link = document.createElement('a');
-            link.download = `Flyer_Ultah_${shortName}.png`;
+            link.download = `Flyer_Ultah_${fullName.replace(/\s+/g, '_')}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast('Flyer sedang diunduh ke perangkat Anda!');
+            showToast('Flyer berhasil dibuat dan diunduh!');
         }
 
         function renderCalendar() {
