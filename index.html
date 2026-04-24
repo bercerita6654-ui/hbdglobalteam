@@ -19,7 +19,12 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .calendar-cell { min-height: 110px; }
+        
+        /* Penyesuaian tinggi minimum sel kalender agar responsif */
+        .calendar-cell { min-height: 85px; }
+        @media (min-width: 768px) {
+            .calendar-cell { min-height: 120px; }
+        }
         
         /* Smooth animation for the pulse effect */
         @keyframes soft-pulse {
@@ -29,114 +34,116 @@
         .today-pulse { animation: soft-pulse 3s infinite; }
     </style>
 </head>
-<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+<!-- Mengganti h-screen dan overflow-hidden dengan min-h-screen agar bisa scroll alami -->
+<body class="text-slate-800 min-h-screen flex flex-col">
 
     <!-- Header / Navbar -->
-    <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60 px-6 py-4 flex flex-wrap md:flex-nowrap justify-between items-center gap-4 z-20 sticky top-0">
+    <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60 px-4 md:px-6 py-4 flex flex-wrap md:flex-nowrap justify-between items-center gap-4 z-20 sticky top-0">
         <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-2.5 rounded-xl shadow-md shadow-indigo-200">
-                <i class="fas fa-gift text-xl"></i>
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-2 md:p-2.5 rounded-xl shadow-md shadow-indigo-200">
+                <i class="fas fa-gift text-lg md:text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl md:text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-slate-800">Kalender Ultah Admin</h1>
-                <p class="text-xs font-medium text-slate-500">PT Global Mart Sejahtera</p>
+                <h1 class="text-lg md:text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-slate-800">Kalender Ultah Admin</h1>
+                <p class="text-[10px] md:text-xs font-medium text-slate-500">PT Global Mart Sejahtera</p>
             </div>
         </div>
         
-        <div class="flex flex-wrap items-center gap-2.5">
-            <button id="btnSync" onclick="syncGoogleSheets()" class="bg-white border border-slate-200 hover:bg-slate-50 hover:border-indigo-300 text-slate-700 px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 group">
+        <div class="flex flex-wrap items-center gap-2 md:gap-2.5">
+            <button id="btnSync" onclick="syncGoogleSheets()" class="bg-white border border-slate-200 hover:bg-slate-50 hover:border-indigo-300 text-slate-700 px-3 md:px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 group text-sm md:text-base">
                 <i class="fas fa-sync-alt text-indigo-500 group-hover:rotate-180 transition-transform duration-500" id="syncIcon"></i> <span class="hidden sm:inline">Sync Sheets</span>
             </button>
             
-            <button onclick="downloadTemplate()" class="bg-white border border-slate-200 hover:bg-slate-50 hover:border-amber-300 text-slate-700 px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2">
+            <button onclick="downloadTemplate()" class="bg-white border border-slate-200 hover:bg-slate-50 hover:border-amber-300 text-slate-700 px-3 md:px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 text-sm md:text-base">
                 <i class="fas fa-table text-amber-500"></i> <span class="hidden sm:inline">Template</span>
             </button>
 
-            <label class="cursor-pointer bg-white border border-slate-200 hover:bg-slate-50 hover:border-emerald-300 text-slate-700 px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2">
+            <label class="cursor-pointer bg-white border border-slate-200 hover:bg-slate-50 hover:border-emerald-300 text-slate-700 px-3 md:px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 text-sm md:text-base">
                 <i class="fas fa-file-upload text-emerald-500"></i> <span class="hidden sm:inline">Unggah</span>
                 <input type="file" id="fileUpload" accept=".json, .csv" class="hidden" onchange="handleFileUpload(event)">
             </label>
             
-            <button onclick="openModal('addModal')" class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-4 py-2 rounded-xl font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center gap-2 transform hover:-translate-y-0.5">
-                <i class="fas fa-plus"></i> Tambah
+            <button onclick="openModal('addModal')" class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-3 md:px-4 py-2 rounded-xl font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center gap-2 transform hover:-translate-y-0.5 text-sm md:text-base">
+                <i class="fas fa-plus"></i> <span class="hidden sm:inline">Tambah</span>
             </button>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-auto p-4 md:p-8 flex flex-col items-center pb-20">
-        <div class="w-full max-w-6xl bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+    <!-- Menghapus overflow-auto dari main agar mengikuti scroll body -->
+    <main class="flex-1 w-full p-2 md:p-6 lg:p-8 flex flex-col items-center pb-12">
+        <div class="w-full max-w-6xl bg-white rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
             
             <!-- Calendar Controls -->
-            <div class="flex justify-between items-center p-6 lg:px-8 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
-                <button onclick="changeMonth(-1)" class="p-2 bg-white border border-slate-200 hover:border-indigo-300 rounded-xl text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow transition-all h-10 w-10 flex items-center justify-center">
-                    <i class="fas fa-chevron-left"></i>
+            <div class="flex justify-between items-center p-4 md:p-6 lg:px-8 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
+                <button onclick="changeMonth(-1)" class="p-2 bg-white border border-slate-200 hover:border-indigo-300 rounded-xl text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow transition-all h-9 w-9 md:h-10 md:w-10 flex items-center justify-center">
+                    <i class="fas fa-chevron-left text-sm md:text-base"></i>
                 </button>
-                <h2 id="monthYearDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800 capitalize tracking-tight">Bulan Tahun</h2>
-                <button onclick="changeMonth(1)" class="p-2 bg-white border border-slate-200 hover:border-indigo-300 rounded-xl text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow transition-all h-10 w-10 flex items-center justify-center">
-                    <i class="fas fa-chevron-right"></i>
+                <h2 id="monthYearDisplay" class="text-xl md:text-3xl font-extrabold text-slate-800 capitalize tracking-tight">Bulan Tahun</h2>
+                <button onclick="changeMonth(1)" class="p-2 bg-white border border-slate-200 hover:border-indigo-300 rounded-xl text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow transition-all h-9 w-9 md:h-10 md:w-10 flex items-center justify-center">
+                    <i class="fas fa-chevron-right text-sm md:text-base"></i>
                 </button>
             </div>
 
             <!-- Calendar Grid -->
-            <div class="p-6 lg:p-8">
+            <div class="p-3 md:p-6 lg:p-8">
                 <!-- Days of Week -->
-                <div class="grid grid-cols-7 gap-2 md:gap-4 mb-4">
-                    <div class="text-center font-bold text-rose-500 uppercase text-xs tracking-wider">Min</div>
-                    <div class="text-center font-bold text-slate-500 uppercase text-xs tracking-wider">Sen</div>
-                    <div class="text-center font-bold text-slate-500 uppercase text-xs tracking-wider">Sel</div>
-                    <div class="text-center font-bold text-slate-500 uppercase text-xs tracking-wider">Rab</div>
-                    <div class="text-center font-bold text-slate-500 uppercase text-xs tracking-wider">Kam</div>
-                    <div class="text-center font-bold text-slate-500 uppercase text-xs tracking-wider">Jum</div>
-                    <div class="text-center font-bold text-indigo-500 uppercase text-xs tracking-wider">Sab</div>
+                <div class="grid grid-cols-7 gap-1 md:gap-4 mb-2 md:mb-4">
+                    <div class="text-center font-bold text-rose-500 uppercase text-[10px] md:text-xs tracking-wider">Min</div>
+                    <div class="text-center font-bold text-slate-500 uppercase text-[10px] md:text-xs tracking-wider">Sen</div>
+                    <div class="text-center font-bold text-slate-500 uppercase text-[10px] md:text-xs tracking-wider">Sel</div>
+                    <div class="text-center font-bold text-slate-500 uppercase text-[10px] md:text-xs tracking-wider">Rab</div>
+                    <div class="text-center font-bold text-slate-500 uppercase text-[10px] md:text-xs tracking-wider">Kam</div>
+                    <div class="text-center font-bold text-slate-500 uppercase text-[10px] md:text-xs tracking-wider">Jum</div>
+                    <div class="text-center font-bold text-indigo-500 uppercase text-[10px] md:text-xs tracking-wider">Sab</div>
                 </div>
 
                 <!-- Days Cells -->
-                <div id="calendarGrid" class="grid grid-cols-7 gap-2 md:gap-4">
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-4">
                     <!-- JS akan mengisi ini -->
                 </div>
             </div>
         </div>
         
         <!-- Info Format -->
-        <div class="w-full max-w-6xl mt-8 p-5 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl flex items-start gap-4 shadow-sm">
+        <div class="w-full max-w-6xl mt-6 md:mt-8 p-4 md:p-5 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl flex flex-col md:flex-row items-start gap-4 shadow-sm">
             <div class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-full flex shrink-0 items-center justify-center text-lg">
                 <i class="fas fa-lightbulb"></i>
             </div>
             <div>
-                <p class="font-bold text-slate-800 text-lg">Tips Integrasi Google Sheets</p>
-                <ol class="text-sm mt-2 text-slate-600 list-decimal ml-4 space-y-1.5 font-medium">
+                <p class="font-bold text-slate-800 text-base md:text-lg">Tips Integrasi Google Sheets</p>
+                <ol class="text-xs md:text-sm mt-2 text-slate-600 list-decimal ml-4 space-y-1.5 font-medium">
                     <li>Klik tombol <b class="text-slate-800">Template</b> di atas untuk mengunduh format tabel standar.</li>
                     <li>Buka Google Sheets baru, klik <b>File > Impor > Upload</b> file template tersebut.</li>
                     <li>Setelah data diisi, klik <b>File > Bagikan > Publikasikan ke web</b> (Pilih: Seluruh Dokumen & .csv).</li>
-                    <li>Ganti link pada variabel <code>SHEET_CSV_URL</code> di dalam kode dengan link baru Anda agar otomatis tersinkronisasi.</li>
+                    <li>Ganti link pada variabel <code class="bg-slate-100 px-1 rounded break-all">SHEET_CSV_URL</code> di dalam kode dengan link baru Anda agar otomatis tersinkronisasi.</li>
                 </ol>
             </div>
         </div>
     </main>
 
     <!-- Modal Tambah Ulang Tahun -->
-    <div id="addModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800">Tambah Manual</h3>
+    <div id="addModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300 my-auto">
+            <div class="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-lg md:text-xl font-bold text-slate-800">Tambah Manual</h3>
                 <button onclick="closeModal('addModal')" class="bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 w-8 h-8 rounded-full flex items-center justify-center transition-all">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="p-6">
+            <div class="p-5 md:p-6">
                 <form id="addForm" onsubmit="handleFormSubmit(event)">
-                    <div class="mb-5">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Nama Lengkap & Panggilan</label>
-                        <input type="text" id="adminName" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium" placeholder="Cth: Budi (Budi Santoso)">
+                    <div class="mb-4 md:mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5 md:mb-2">Nama Lengkap & Panggilan</label>
+                        <input type="text" id="adminName" required class="w-full px-3 py-2.5 md:px-4 md:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-sm md:text-base" placeholder="Cth: Budi (Budi Santoso)">
                     </div>
-                    <div class="mb-8">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Tanggal Lahir</label>
-                        <input type="date" id="adminDate" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700">
+                    <div class="mb-6 md:mb-8">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5 md:mb-2">Tanggal Lahir</label>
+                        <input type="date" id="adminDate" required class="w-full px-3 py-2.5 md:px-4 md:py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-slate-700 text-sm md:text-base">
                     </div>
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="closeModal('addModal')" class="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Batal</button>
-                        <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-200 transition-all">Simpan Data</button>
+                    <div class="flex justify-end gap-2 md:gap-3">
+                        <button type="button" onclick="closeModal('addModal')" class="px-4 py-2 md:px-5 md:py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors text-sm md:text-base">Batal</button>
+                        <button type="submit" class="px-4 py-2 md:px-6 md:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-200 transition-all text-sm md:text-base">Simpan Data</button>
                     </div>
                 </form>
             </div>
@@ -145,28 +152,28 @@
 
     <!-- Modal Detail Hari -->
     <div id="dayModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-300">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-orange-50 to-amber-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col max-h-full">
+            <div class="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-orange-50 to-amber-50 shrink-0">
                 <div class="flex items-center gap-3">
-                    <div class="text-orange-500 text-2xl"><i class="fas fa-calendar-day"></i></div>
-                    <h3 id="dayModalTitle" class="text-xl font-bold text-slate-800 tracking-tight">Tanggal</h3>
+                    <div class="text-orange-500 text-xl md:text-2xl"><i class="fas fa-calendar-day"></i></div>
+                    <h3 id="dayModalTitle" class="text-lg md:text-xl font-bold text-slate-800 tracking-tight">Tanggal</h3>
                 </div>
                 <button onclick="closeModal('dayModal')" class="bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="p-6 max-h-[70vh] overflow-y-auto" id="dayModalContent">
+            <div class="p-4 md:p-6 overflow-y-auto" id="dayModalContent">
                 <!-- Konten dinamis -->
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800/95 backdrop-blur-sm border border-slate-700 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 transform translate-y-24 opacity-0 transition-all duration-300 z-[60]">
-        <div class="bg-emerald-500/20 text-emerald-400 w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-            <i class="fas fa-check"></i>
+    <div id="toast" class="fixed bottom-6 right-6 left-6 md:left-auto bg-slate-800/95 backdrop-blur-sm border border-slate-700 text-white px-5 py-3 md:px-6 md:py-4 rounded-2xl shadow-2xl flex items-center gap-3 md:gap-4 transform translate-y-24 opacity-0 transition-all duration-300 z-[60]">
+        <div class="bg-emerald-500/20 text-emerald-400 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0">
+            <i class="fas fa-check text-sm md:text-base"></i>
         </div>
-        <span id="toastMessage" class="font-medium text-sm">Pesan sukses</span>
+        <span id="toastMessage" class="font-medium text-xs md:text-sm">Pesan sukses</span>
     </div>
 
     <script>
@@ -196,13 +203,11 @@
         // TEMPLATE UCAPAN ULANG TAHUN
         // ==========================================
         function copyGreeting(fullName) {
-            // Mengambil nama panggilan (bagian sebelum tanda kurung)
             let shortName = fullName.split(' (')[0].trim();
-            if(!shortName) shortName = fullName; // Fallback jika format berbeda
+            if(!shortName) shortName = fullName; 
             
             const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
             
-            // Menggunakan execCommand (Fallback method) agar pasti berfungsi di dalam iFrame (Canvas)
             const textArea = document.createElement("textarea");
             textArea.value = template;
             textArea.style.position = "fixed";
@@ -234,7 +239,7 @@
 
             for (let i = 0; i < firstDayOfMonth; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "calendar-cell rounded-2xl border border-transparent";
+                emptyCell.className = "calendar-cell rounded-xl md:rounded-2xl border border-transparent";
                 calendarGrid.appendChild(emptyCell);
             }
 
@@ -254,11 +259,11 @@
 
                 const cell = document.createElement('div');
                 
-                // Styling Kalender Modern
-                let cellClasses = "calendar-cell rounded-2xl p-3 border transition-all cursor-pointer flex flex-col group relative overflow-hidden ";
+                // Styling Kalender Modern dengan penyesuaian padding mobile
+                let cellClasses = "calendar-cell rounded-xl md:rounded-2xl p-1.5 md:p-3 border transition-all cursor-pointer flex flex-col group relative overflow-hidden ";
                 
                 if (isToday) {
-                    cellClasses += "bg-white border-indigo-300 shadow-md shadow-indigo-100 ring-2 ring-indigo-500/20";
+                    cellClasses += "bg-white border-indigo-300 shadow-md shadow-indigo-100 ring-1 md:ring-2 ring-indigo-500/20";
                 } else if (daysBirthdays.length > 0) {
                     cellClasses += "bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 hover:border-orange-300 hover:shadow-md hover:shadow-orange-100/50 hover:-translate-y-0.5";
                 } else {
@@ -268,28 +273,27 @@
                 cell.className = cellClasses;
                 cell.onclick = () => showDayDetails(day, monthNames[month], daysBirthdays);
 
-                // Ornamen dekoratif khusus hari ulang tahun
-                const decorHTML = daysBirthdays.length > 0 ? `<div class="absolute -bottom-4 -right-4 text-orange-400/10 text-6xl transform -rotate-12 pointer-events-none"><i class="fas fa-gift"></i></div>` : '';
+                // Ornamen dekoratif
+                const decorHTML = daysBirthdays.length > 0 ? `<div class="absolute -bottom-2 -right-2 md:-bottom-4 md:-right-4 text-orange-400/10 text-4xl md:text-6xl transform -rotate-12 pointer-events-none"><i class="fas fa-gift"></i></div>` : '';
 
                 // Header Tanggal
                 let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative">
-                    <span class="${isToday ? 'bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-xl shadow-sm today-pulse text-sm' : 'text-slate-700 ml-1 mt-1 text-lg group-hover:text-indigo-600 transition-colors'}">${day}</span>
+                    <span class="${isToday ? 'bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-lg md:rounded-xl shadow-sm today-pulse text-xs md:text-sm' : 'text-slate-700 ml-0.5 mt-0.5 md:ml-1 md:mt-1 text-sm md:text-lg group-hover:text-indigo-600 transition-colors'}">${day}</span>
                 </div>`;
 
                 // List Ultah Mini
-                let eventsHTML = `<div class="mt-3 flex-1 flex flex-col gap-1.5 overflow-y-auto z-10 relative">`;
+                let eventsHTML = `<div class="mt-1 md:mt-3 flex-1 flex flex-col gap-1 md:gap-1.5 overflow-y-auto z-10 relative">`;
                 daysBirthdays.slice(0, 3).forEach(b => {
-                    // Extract panggilan untuk grid mini
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
                     eventsHTML += `
-                        <div class="text-[11px] md:text-xs bg-white/60 backdrop-blur-sm text-orange-700 px-2.5 py-1.5 rounded-lg truncate font-bold border border-orange-200/60 shadow-sm flex items-center gap-1.5">
-                            <i class="fas fa-birthday-cake text-orange-400 text-[10px]"></i> ${shortName}
+                        <div class="text-[9px] md:text-xs bg-white/60 backdrop-blur-sm text-orange-700 px-1.5 md:px-2.5 py-1 md:py-1.5 rounded-md md:rounded-lg truncate font-bold border border-orange-200/60 shadow-sm flex items-center gap-1 md:gap-1.5 leading-none">
+                            <i class="fas fa-birthday-cake text-orange-400 text-[8px] md:text-[10px]"></i> <span class="truncate">${shortName}</span>
                         </div>
                     `;
                 });
                 
                 if (daysBirthdays.length > 3) {
-                    eventsHTML += `<div class="text-xs text-orange-600/80 font-bold px-1 text-center bg-white/40 rounded-lg py-1">+${daysBirthdays.length - 3} lagi</div>`;
+                    eventsHTML += `<div class="text-[9px] md:text-xs text-orange-600/80 font-bold px-1 text-center bg-white/40 rounded-md md:rounded-lg py-0.5 md:py-1">+${daysBirthdays.length - 3} lagi</div>`;
                 }
                 
                 eventsHTML += `</div>`;
@@ -328,11 +332,11 @@
             
             if (daysBirthdays.length === 0) {
                 content.innerHTML = `
-                    <div class="text-center py-10 flex flex-col items-center">
-                        <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-calendar-times text-3xl text-slate-300"></i>
+                    <div class="text-center py-8 md:py-10 flex flex-col items-center">
+                        <div class="bg-slate-50 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-3 md:mb-4">
+                            <i class="fas fa-calendar-times text-2xl md:text-3xl text-slate-300"></i>
                         </div>
-                        <p class="font-medium text-slate-500">Tidak ada agenda ulang tahun.</p>
+                        <p class="font-medium text-slate-500 text-sm md:text-base">Tidak ada agenda ulang tahun.</p>
                     </div>
                 `;
             } else {
@@ -341,29 +345,28 @@
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const currentYear = new Date().getFullYear();
                     const age = currentYear - birthYear;
-                    const ageText = !isNaN(age) ? `<div class="text-[11px] font-bold bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg border border-indigo-100 uppercase tracking-wider">Usia ${age}</div>` : '';
+                    const ageText = !isNaN(age) ? `<div class="text-[10px] md:text-[11px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 md:px-2.5 md:py-1 rounded-md md:rounded-lg border border-indigo-100 uppercase tracking-wider whitespace-nowrap">Usia ${age}</div>` : '';
 
-                    const jabatanHtml = b.jabatan ? `<p class="text-xs font-bold text-indigo-600 mt-1">${b.jabatan} <span class="text-slate-400 font-normal ml-1"> ${b.outlet ? '• ' + b.outlet : ''}</span></p>` : '';
+                    const jabatanHtml = b.jabatan ? `<p class="text-[11px] md:text-xs font-bold text-indigo-600 mt-0.5 md:mt-1">${b.jabatan} <span class="text-slate-400 font-normal ml-1"> ${b.outlet ? '• ' + b.outlet : ''}</span></p>` : '';
                     const tempatLahirStr = b.tempatLahir ? `${b.tempatLahir}, ` : '';
                     
-                    // Escape single quotes for JS function parameter
                     const safeName = b.nama.replace(/'/g, "\\'");
 
                     html += `
-                        <li class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-orange-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
-                            <div class="flex items-start sm:items-center gap-4 overflow-hidden w-full">
-                                <div class="bg-gradient-to-br from-orange-200 to-amber-400 text-orange-800 w-12 h-12 rounded-full flex shrink-0 items-center justify-center text-xl shadow-inner border-2 border-white">
+                        <li class="bg-white border border-slate-200 p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm hover:shadow-md hover:border-orange-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4 group">
+                            <div class="flex items-start sm:items-center gap-3 md:gap-4 overflow-hidden w-full">
+                                <div class="bg-gradient-to-br from-orange-200 to-amber-400 text-orange-800 w-10 h-10 md:w-12 md:h-12 rounded-full flex shrink-0 items-center justify-center text-lg md:text-xl shadow-inner border-2 border-white">
                                     <i class="fas fa-user-astronaut"></i>
                                 </div>
                                 <div class="truncate">
-                                    <p class="font-extrabold text-slate-800 text-[15px] truncate" title="${b.nama}">${b.nama}</p>
+                                    <p class="font-extrabold text-slate-800 text-sm md:text-[15px] truncate" title="${b.nama}">${b.nama}</p>
                                     ${jabatanHtml}
-                                    <p class="text-xs text-slate-500 font-medium mt-1 truncate"><i class="fas fa-calendar-alt opacity-70 mr-1.5"></i> ${tempatLahirStr}${b.tanggal}</p>
+                                    <p class="text-[10px] md:text-xs text-slate-500 font-medium mt-0.5 md:mt-1 truncate"><i class="fas fa-calendar-alt opacity-70 mr-1.5"></i> ${tempatLahirStr}${b.tanggal}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center sm:flex-col items-end gap-2 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                            <div class="flex items-center sm:flex-col items-end gap-2 shrink-0 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 w-full sm:w-auto justify-between sm:justify-end">
                                 ${ageText}
-                                <button onclick="copyGreeting('${safeName}')" class="w-full sm:w-auto bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-[#25D366]/20 shadow-sm">
+                                <button onclick="copyGreeting('${safeName}')" class="w-auto bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-[#25D366]/20 shadow-sm">
                                     <i class="fab fa-whatsapp text-sm"></i> Copy Ucapan
                                 </button>
                             </div>
