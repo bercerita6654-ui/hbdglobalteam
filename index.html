@@ -214,33 +214,10 @@
             syncGoogleSheets(true);
         }
 
-        function copyGreeting(fullName) {
-            let shortName = fullName.split(' (')[0].trim();
-            if(!shortName) shortName = fullName; 
-            
-            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
-            
-            const textArea = document.createElement("textarea");
-            textArea.value = template;
-            textArea.style.position = "fixed";
-            textArea.style.opacity = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                showToast(`Ucapan untuk ${shortName} disalin!`);
-            } catch (err) {
-                alert('Browser Anda tidak mendukung fitur copy otomatis.');
-            }
-            document.body.removeChild(textArea);
-        }
-
         // ==========================================
-        // GENERATOR FLYER OTOMATIS (CANVAS API)
+        // LOGIK UTAMA PEMBUATAN CANVAS FLYER 
         // ==========================================
-        async function downloadFlyer(namaStr, tanggalLahir) {
+        async function getFlyerCanvas(namaStr, tanggalLahir) {
             // Memastikan font telah ter-load sebelum Canvas menggambar teks
             await document.fonts.ready;
 
@@ -249,7 +226,7 @@
             canvas.height = 1080;
             const ctx = canvas.getContext('2d');
             
-            // Ekstrak nama lengkap dari dalam kurung (atau gunakan nama asli jika tidak ada kurung)
+            // Ekstrak nama lengkap dari dalam kurung
             let fullName = namaStr;
             const match = namaStr.match(/\(([^)]+)\)/);
             if (match) {
@@ -391,7 +368,70 @@
             ctx.fillText('globalmart.id', igX + 28, igY + 2);
             ctx.restore();
 
-            // 7. Download file gambar
+            return canvas;
+        }
+
+        // ==========================================
+        // COPY TEXT & GAMBAR KE CLIPBOARD (UNTUK WA)
+        // ==========================================
+        async function copyGreeting(namaStr, tanggalLahir) {
+            let shortName = namaStr.split(' (')[0].trim();
+            if(!shortName) shortName = namaStr; 
+            
+            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
+            
+            // Fallback function: Jika browser menolak akses gambar clipboard (misal: di dalam iframe)
+            const fallbackCopyText = () => {
+                const textArea = document.createElement("textarea");
+                textArea.value = template;
+                textArea.style.position = "fixed";
+                textArea.style.opacity = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showToast(`Teks ucapan untuk ${shortName} disalin! (Browser memblokir gambar)`);
+                } catch (err) {
+                    alert('Browser Anda tidak mendukung fitur copy otomatis.');
+                }
+                document.body.removeChild(textArea);
+            };
+
+            try {
+                // 1. Buat Gambar Flyer melalui Canvas
+                const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
+                
+                // 2. Konversi Canvas ke Blob, lalu coba Copy Gambar + Teks ke Clipboard
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const data = [new ClipboardItem({
+                            [blob.type]: blob,
+                            'text/plain': new Blob([template], { type: 'text/plain' })
+                        })];
+                        await navigator.clipboard.write(data);
+                        showToast(`Gambar Flyer & Ucapan WA untuk ${shortName} disalin!`);
+                    } catch (err) {
+                        console.warn("Clipboard tingkat lanjut gagal, fallback ke copy text biasa.", err);
+                        fallbackCopyText();
+                    }
+                }, 'image/png');
+            } catch(e) {
+                console.error(e);
+                fallbackCopyText();
+            }
+        }
+
+        // ==========================================
+        // DOWNLOAD GAMBAR SAJA (TOMBOL KUNING)
+        // ==========================================
+        async function downloadFlyer(namaStr, tanggalLahir) {
+            const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
+            let fullName = namaStr;
+            const match = namaStr.match(/\(([^)]+)\)/);
+            if (match) fullName = match[1].trim();
+
             const link = document.createElement('a');
             link.download = `Flyer_Ultah_${fullName.replace(/\s+/g, '_')}.png`;
             link.href = canvas.toDataURL('image/png');
@@ -548,7 +588,7 @@
                                 <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-yellow-200 transition-transform transform hover:scale-110 border border-yellow-500" title="Unduh Flyer Ulang Tahun (PNG)">
                                     <i class="fas fa-image text-xs"></i>
                                 </button>
-                                <button onclick="copyGreeting('${safeName}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-110 border border-[#1DA851]" title="Copy Ucapan WA">
+                                <button onclick="copyGreeting('${safeName}', '${formattedDate}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-110 border border-[#1DA851]" title="Copy Gambar & Ucapan WA">
                                     <i class="fab fa-whatsapp text-xs"></i>
                                 </button>
                             </div>
@@ -638,7 +678,7 @@
                                     <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="w-auto bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-yellow-200 transform hover:-translate-y-0.5 border border-yellow-500">
                                         <i class="fas fa-image text-sm md:text-base"></i> Buat Flyer
                                     </button>
-                                    <button onclick="copyGreeting('${safeName}')" class="w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
+                                    <button onclick="copyGreeting('${safeName}', '${formattedDate}')" class="w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
                                         <i class="fab fa-whatsapp text-sm md:text-base"></i> Copy Ucapan
                                     </button>
                                 </div>
