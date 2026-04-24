@@ -6,6 +6,8 @@
     <title>Kalender Ulang Tahun Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Menambahkan PapaParse untuk parsing CSV tingkat lanjut agar tidak error saat membaca tabel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         /* Custom scrollbar untuk tampilan yang lebih rapi */
         ::-webkit-scrollbar {
@@ -167,7 +169,7 @@
 
         let currentDate = new Date();
         
-        // Buat dummy data sesuai bulan ini agar langsung terlihat (Untuk Preview)
+        // Buat dummy data sesuai bulan ini agar langsung terlihat (Untuk Preview awal)
         const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
         const todayDay = String(currentDate.getDate()).padStart(2, '0');
         
@@ -352,7 +354,93 @@
             }
         }
 
-        // Upload JSON/CSV Data
+        // Parsing dan Standarisasi format Tanggal Lengkap (Mendukung Teks Bulan Indonesia)
+        function parseDate(dateStr) {
+            if (!dateStr) return "";
+            dateStr = String(dateStr).trim();
+            
+            if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            
+            // Konversi bulan teks (contoh: 15 Mei 1995 atau 15-May-90)
+            const monthsIndo = {
+                'januari': '01', 'jan': '01', 'februari': '02', 'feb': '02',
+                'maret': '03', 'mar': '03', 'april': '04', 'apr': '04',
+                'mei': '05', 'may': '05', 'juni': '06', 'jun': '06',
+                'juli': '07', 'jul': '07', 'agustus': '08', 'agu': '08', 'aug': '08',
+                'september': '09', 'sep': '09', 'oktober': '10', 'okt': '10', 'oct': '10',
+                'november': '11', 'nov': '11', 'desember': '12', 'des': '12', 'dec': '12'
+            };
+
+            let textMatch = dateStr.match(/^(\d{1,2})[\s\-\/]+([a-zA-Z]+)[\s\-\/]+(\d{2,4})$/);
+            if(textMatch) {
+                let d = textMatch[1].padStart(2, '0');
+                let mText = textMatch[2].toLowerCase();
+                let y = textMatch[3];
+                if(y.length === 2) y = parseInt(y) > 50 ? '19'+y : '20'+y;
+                let m = monthsIndo[mText] || '01';
+                return `${y}-${m}-${d}`;
+            }
+
+            // Handle pemisah garis miring, strip, atau titik
+            let parts = dateStr.split(/[\/\-\.]/);
+            if (parts.length === 3) {
+                if (parts[0].length === 4) { // YYYY/MM/DD
+                    return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+                } else if (parts[2].length === 4) { // DD/MM/YYYY
+                    return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                } else if (parts[2].length === 2) { // DD/MM/YY
+                    let year = parseInt(parts[2]) > 50 ? '19'+parts[2] : '20'+parts[2];
+                    return `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                }
+            }
+            return dateStr;
+        }
+
+        // Logic pemrosesan data menggunakan PapaParse (Akurat membaca CSV)
+        function processCSVWithPapaParse(text, callbackFn) {
+            Papa.parse(text, {
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const rows = results.data;
+                    const parsedResult = [];
+                    let currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
+                    
+                    // Lewati baris pertama (header tabel)
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row.length >= 7) {
+                            const namaAsli = (row[1] || '').trim();
+                            const namaPanggilan = (row[2] || '').trim();
+                            const jabatan = (row[3] || '').trim();
+                            const outlet = (row[4] || '').trim();
+                            const tempatLahir = (row[5] || '').trim();
+                            const rawDate = (row[6] || '').trim();
+
+                            if (namaAsli && rawDate) {
+                                const namaFinal = namaPanggilan ? `${namaPanggilan} (${namaAsli})` : namaAsli;
+                                parsedResult.push({
+                                    id: ++currentMaxId,
+                                    nama: namaFinal,
+                                    jabatan: jabatan,
+                                    outlet: outlet,
+                                    tempatLahir: tempatLahir,
+                                    tanggal: parseDate(rawDate)
+                                });
+                            }
+                        }
+                    }
+                    callbackFn(parsedResult);
+                },
+                error: function(err) {
+                    console.error("PapaParse error:", err);
+                    alert("Gagal membaca struktur file CSV. Pastikan file valid.");
+                }
+            });
+        }
+
+        // Upload JSON/CSV Data Manual
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -361,14 +449,15 @@
             reader.onload = function(e) {
                 const text = e.target.result;
                 if (file.name.endsWith('.csv')) {
-                    const parsedData = processCSVData(text);
-                    if (parsedData.length > 0) {
-                        birthdays = [...birthdays, ...parsedData];
-                        renderCalendar();
-                        showToast(`${parsedData.length} data berhasil diunggah dari CSV!`);
-                    } else {
-                        alert("Gagal membaca data CSV atau data kosong.");
-                    }
+                    processCSVWithPapaParse(text, (parsedData) => {
+                        if (parsedData.length > 0) {
+                            birthdays = [...birthdays, ...parsedData];
+                            renderCalendar();
+                            showToast(`${parsedData.length} data berhasil diunggah dari CSV!`);
+                        } else {
+                            alert("Data CSV kosong atau format kolom tidak sesuai template.");
+                        }
+                    });
                 } else {
                     try {
                         const parsedData = JSON.parse(text);
@@ -398,84 +487,87 @@
             reader.readAsText(file);
         }
 
-        // Parsing dan Standarisasi format Tanggal
-        function parseDate(dateStr) {
-            if (!dateStr) return "";
-            dateStr = String(dateStr).trim();
-            
-            // Antisipasi jika format tanggal ISO (mengandung T seperti 1990-04-14T17:00:00Z)
-            if (dateStr.includes('T')) {
-                dateStr = dateStr.split('T')[0];
-            }
+        // Sync from CSV Web Link directly (Super Robust Method)
+        async function syncGoogleSheets(isAuto = false) {
+            const btn = document.getElementById('btnSync');
+            const icon = document.getElementById('syncIcon');
 
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-            
-            // Handle pemisah garis miring, strip, atau titik
-            let parts = dateStr.split(/[\/\-\.]/);
-            if (parts.length === 3) {
-                if (parts[0].length === 4) { // YYYY/MM/DD
-                    return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
-                } else if (parts[2].length === 4) { // DD/MM/YYYY
-                    return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                } else if (parts[2].length === 2) { // DD/MM/YY
-                    let year = parseInt(parts[2]) > 50 ? '19'+parts[2] : '20'+parts[2];
-                    return `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            icon.classList.add('fa-spin');
+
+            try {
+                // Menambahkan anti-cache (parameter 't') agar Sheet selalu merespon dengan data terbaru
+                const cacheBusterUrl = SHEET_CSV_URL + "&t=" + new Date().getTime();
+                let textResponse = "";
+
+                try {
+                    // Coba jalur utama (langsung)
+                    const response = await fetch(cacheBusterUrl);
+                    if (!response.ok) throw new Error("Fetch Direct Gagal");
+                    textResponse = await response.text();
+                } catch (err) {
+                    console.warn("Jalur langsung diblokir (CORS). Mencoba jalur proxy sekunder...");
+                    // Fallback ke Proxy publik jika koneksi langsung diblokir
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(cacheBusterUrl)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error("Koneksi proxy gagal");
+                    textResponse = await response.text();
                 }
-            }
-            return dateStr;
-        }
+                
+                // Deteksi jika link URL salah / berisi halaman HTML Google Drive
+                if (textResponse.trim().toLowerCase().startsWith('<!doctype') || textResponse.trim().toLowerCase().startsWith('<html')) {
+                    throw new Error("Tautan Google Sheets menolak akses. Pastikan sudah di-'Publish to Web' sebagai CSV.");
+                }
 
-        function csvToArray(text) {
-            let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
-            for (l of text) {
-                if ('"' === l) {
-                    if (s && l === p) row[i] += l;
-                    s = !s;
-                } else if (',' === l && s) l = row[++i] = '';
-                else if ('\n' === l && s) {
-                    if ('\r' === p) row[i] = row[i].slice(0, -1);
-                    row = ret[++r] = [l = '']; i = 0;
-                } else row[i] += l;
-                p = l;
-            }
-            return ret;
-        }
-
-        function processCSVData(csvText) {
-            const rows = csvToArray(csvText);
-            const result = [];
-            let currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
-            
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (row.length >= 7) {
-                    const namaAsli = (row[1] || '').trim();
-                    const namaPanggilan = (row[2] || '').trim();
-                    const jabatan = (row[3] || '').trim();
-                    const outlet = (row[4] || '').trim();
-                    const tempatLahir = (row[5] || '').trim();
-                    const rawDate = (row[6] || '').trim();
-
-                    if (namaAsli && rawDate) {
-                        const namaFinal = namaPanggilan ? `${namaPanggilan} (${namaAsli})` : namaAsli;
-                        result.push({
-                            id: ++currentMaxId,
-                            nama: namaFinal,
-                            jabatan: jabatan,
-                            outlet: outlet,
-                            tempatLahir: tempatLahir,
-                            tanggal: parseDate(rawDate)
-                        });
+                // Proses dengan PapaParse
+                processCSVWithPapaParse(textResponse, (newBirthdays) => {
+                    if (newBirthdays && newBirthdays.length > 0) {
+                        birthdays = newBirthdays; // Replace data
+                        renderCalendar();
+                        
+                        if (isAuto) {
+                            showToast(`Auto-sync berhasil: ${newBirthdays.length} data dimuat!`);
+                        } else {
+                            showToast(`${newBirthdays.length} data disinkronkan dari Google Sheets!`);
+                        }
+                    } else {
+                        if (!isAuto) alert("Data berhasil ditarik, tapi kosong. Kemungkinan format kolom Sheet Anda belum sesuai template.");
                     }
+                });
+
+            } catch (error) {
+                console.error("Sync Error:", error);
+                if (!isAuto) {
+                    alert("Gagal melakukan sinkronisasi.\n\nDetail: " + error.message);
+                } else {
+                    showToast("Gagal auto-sync. Coba klik tombol Sync manual.");
                 }
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                icon.classList.remove('fa-spin');
             }
-            return result;
+        }
+
+        // Export/Download Data JSON
+        function exportData() {
+            const dataToExport = birthdays.map(b => ({ nama: b.nama, tanggal: b.tanggal }));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+            
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "data_ulang_tahun_admin.json");
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            
+            showToast("Data berhasil diunduh.");
         }
 
         // Fungsi Download Template CSV
         function downloadTemplate() {
             const headers = ["No", "Nama", "Nama Panggilan", "Jabatan", "Outlet", "Tempat Lahir", "Tanggal Lahir"];
-            // Buat tanggal hari ini untuk contoh
             const currDate = new Date();
             const yyyy = currDate.getFullYear();
             const mm = String(currDate.getMonth() + 1).padStart(2, '0');
@@ -498,75 +590,6 @@
             document.body.removeChild(link);
             
             showToast("Template CSV berhasil diunduh.");
-        }
-
-        // Sync from CSV Web Link directly
-        async function syncGoogleSheets(isAuto = false) {
-            const btn = document.getElementById('btnSync');
-            const icon = document.getElementById('syncIcon');
-
-            btn.disabled = true;
-            btn.classList.add('opacity-75', 'cursor-not-allowed');
-            icon.classList.add('fa-spin');
-
-            try {
-                const response = await fetch(SHEET_CSV_URL);
-                if (!response.ok) throw new Error("Gagal terhubung ke link CSV Google Sheets.");
-                
-                const textResponse = await response.text();
-                
-                // Deteksi Dini: Jika response berupa halaman HTML (biasanya tanda gagal akses)
-                if (textResponse.trim().toLowerCase().startsWith('<!doctype') || textResponse.trim().toLowerCase().startsWith('<html')) {
-                    throw new Error("Data ditolak. Tautan gagal memberikan format CSV yang valid.");
-                }
-
-                // Parse teks CSV ke array objek
-                const newBirthdays = processCSVData(textResponse);
-                
-                if (newBirthdays && newBirthdays.length > 0) {
-                    // Pastikan format tanggal sudah benar
-                    birthdays = newBirthdays.map(b => ({
-                        ...b,
-                        tanggal: parseDate(b.tanggal)
-                    }));
-                    
-                    renderCalendar();
-                    
-                    if (isAuto) {
-                        showToast(`Auto-sync berhasil: ${newBirthdays.length} data dimuat!`);
-                    } else {
-                        showToast(`${newBirthdays.length} data disinkronkan dari Google Sheets!`);
-                    }
-                } else {
-                    if (!isAuto) alert("Data berhasil ditarik, tapi kosong. Kemungkinan format kolom tidak sesuai.");
-                }
-            } catch (error) {
-                console.error("Sync Error:", error);
-                if (!isAuto) {
-                    alert("Gagal melakukan sinkronisasi.\n\nDetail: " + error.message);
-                } else {
-                    showToast("Gagal auto-sync. Format CSV belum pas.");
-                }
-            } finally {
-                btn.disabled = false;
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                icon.classList.remove('fa-spin');
-            }
-        }
-
-        // Export/Download Data JSON
-        function exportData() {
-            const dataToExport = birthdays.map(b => ({ nama: b.nama, tanggal: b.tanggal }));
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
-            
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href",     dataStr);
-            downloadAnchorNode.setAttribute("download", "data_ulang_tahun_admin.json");
-            document.body.appendChild(downloadAnchorNode); 
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            
-            showToast("Data berhasil diunduh.");
         }
 
         // Toast Notifikasi
