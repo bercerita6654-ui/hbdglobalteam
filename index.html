@@ -544,9 +544,14 @@
                                     <p class="text-[10px] text-slate-500 truncate font-medium mt-0.5">${b.jabatan || 'Admin'}</p>
                                 </div>
                             </div>
-                            <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-yellow-200 transition-transform transform hover:scale-110 ml-2 border border-yellow-500" title="Unduh Flyer Ulang Tahun (PNG)">
-                                <i class="fas fa-image text-xs"></i>
-                            </button>
+                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-yellow-200 transition-transform transform hover:scale-110 border border-yellow-500" title="Unduh Flyer Ulang Tahun (PNG)">
+                                    <i class="fas fa-image text-xs"></i>
+                                </button>
+                                <button onclick="copyGreeting('${safeName}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-110 border border-[#1DA851]" title="Copy Ucapan WA">
+                                    <i class="fab fa-whatsapp text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
