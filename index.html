@@ -64,7 +64,7 @@
     </div>
 
     <!-- Header -->
-    <header class="mx-2 md:mx-4 mt-2 md:mt-4 glass-panel shadow-lg shadow-blue-100/50 rounded-2xl px-3 md:px-6 py-2 md:py-3 flex flex-wrap md:flex-nowrap justify-between items-center z-20 shrink-0 border-b border-blue-100 gap-2">
+    <header class="mx-2 md:mx-4 mt-2 md:mt-4 glass-panel shadow-lg shadow-blue-100/50 rounded-xl px-3 md:px-6 py-2 md:py-3 flex flex-wrap md:flex-nowrap justify-between items-center z-20 shrink-0 border-b border-blue-100 gap-2">
         <div class="flex items-center gap-2 md:gap-3">
             <div class="bg-gradient-to-tr from-blue-500 to-blue-700 text-white p-2 rounded-xl shadow-md shadow-blue-200 shrink-0">
                 <i class="fas fa-birthday-cake text-base md:text-xl text-yellow-300 animate-bounce" style="animation-duration: 2.5s;"></i>
@@ -89,8 +89,8 @@
     <!-- Menambahkan min-h-0 agar flex bisa mendistribusikan sisa tinggi ruang sepenuhnya ke anak-anaknya -->
     <main class="flex-1 w-full max-w-[1600px] mx-auto p-2 md:p-4 flex flex-col lg:flex-row items-stretch gap-2 md:gap-4 relative z-10 overflow-hidden min-h-0">
         
-        <!-- Bagian Kiri: Kalender Utama -->
-        <div class="flex-1 w-full glass-panel rounded-2xl md:rounded-3xl shadow-xl shadow-blue-200/40 flex flex-col border border-white overflow-hidden min-h-0">
+        <!-- Bagian Kiri: Kalender Utama (Diperkecil porsinya agar kotak menjadi lebih persegi) -->
+        <div class="flex-1 w-full glass-panel rounded-xl md:rounded-2xl shadow-xl shadow-blue-200/40 flex flex-col border border-white overflow-hidden min-h-0">
             
             <div class="flex justify-between items-center p-2 md:p-4 border-b border-blue-100 bg-white/40 shrink-0">
                 <button onclick="changeMonth(-1)" class="p-1.5 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-lg md:rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
@@ -106,13 +106,13 @@
 
             <div class="p-1.5 md:p-3 flex-1 flex flex-col bg-white/30 overflow-hidden min-h-0">
                 <div class="grid grid-cols-7 gap-1 md:gap-2 mb-1.5 shrink-0">
-                    <div class="text-center font-bold text-rose-500 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Min</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Sen</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Sel</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Rab</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Kam</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Jum</div>
-                    <div class="text-center font-bold text-yellow-600 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-md py-1 shadow-sm border border-blue-50">Sab</div>
+                    <div class="text-center font-bold text-rose-500 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Min</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Sen</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Sel</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Rab</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Kam</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Jum</div>
+                    <div class="text-center font-bold text-yellow-600 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Sab</div>
                 </div>
 
                 <!-- Grid kalender: min-h-0 sangat penting agar kotak mau menyesuaikan tinggi dengan proporsional -->
@@ -122,8 +122,8 @@
             </div>
         </div>
 
-        <!-- Bagian Kanan: List Ulang Tahun Bulan Ini -->
-        <aside class="w-full lg:w-[320px] shrink-0 glass-panel rounded-2xl md:rounded-3xl shadow-xl shadow-blue-200/30 flex flex-col border border-white overflow-hidden h-[30vh] min-h-[220px] lg:h-full lg:max-h-full">
+        <!-- Bagian Kanan: List Ulang Tahun Bulan Ini (Diperlebar menjadi 450px) -->
+        <aside class="w-full lg:w-[450px] shrink-0 glass-panel rounded-xl md:rounded-2xl shadow-xl shadow-blue-200/30 flex flex-col border border-white overflow-hidden h-[30vh] min-h-[220px] lg:h-full lg:max-h-full">
             <div class="bg-gradient-to-r from-blue-700 to-blue-600 p-3 md:p-4 border-b border-blue-500 shrink-0 flex items-center gap-2 md:gap-3">
                 <div class="bg-yellow-300 text-blue-900 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm shadow-inner shrink-0">
                     <i class="fas fa-list-ul"></i>
@@ -131,7 +131,7 @@
                 <h3 class="font-extrabold text-white tracking-wide text-sm md:text-base">Ultah Bulan Ini</h3>
             </div>
             
-            <div id="sidebarContent" class="p-2 md:p-4 overflow-y-auto bg-white/40 space-y-2 flex-1 hide-scroll">
+            <div id="sidebarContent" class="p-2 md:p-4 overflow-y-auto bg-white/40 space-y-3 flex-1 hide-scroll">
                 <!-- JS mengisi ini -->
             </div>
         </aside>
@@ -398,7 +398,8 @@
 
             for (let i = 0; i < firstDayOfMonth; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "calendar-cell rounded-lg md:rounded-xl border border-transparent bg-white/20 min-h-0";
+                // Mengubah rounded-xl menjadi rounded-sm (kotak / persegi tegas)
+                emptyCell.className = "calendar-cell rounded-sm border border-transparent bg-white/20 min-h-0";
                 calendarGrid.appendChild(emptyCell);
             }
 
@@ -418,7 +419,8 @@
 
                 const cell = document.createElement('div');
                 
-                let cellClasses = "calendar-cell rounded-lg md:rounded-xl p-1 md:p-2 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden bg-white/80 min-h-0 ";
+                // Rounded-sm agar bentuknya persegi/kotak
+                let cellClasses = "calendar-cell rounded-sm p-1 md:p-2 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden bg-white/80 min-h-0 ";
                 
                 if (isToday) {
                     cellClasses += "border-blue-400 shadow-lg shadow-blue-200/50 ring-2 ring-blue-500 z-10";
@@ -434,7 +436,7 @@
                 const decorHTML = daysBirthdays.length > 0 ? `<div class="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-yellow-400/30 text-3xl md:text-5xl transform -rotate-12 pointer-events-none transition-transform group-hover:scale-110 group-hover:text-yellow-400/50"><i class="fas fa-gift"></i></div>` : '';
 
                 let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative shrink-0 mb-0.5 md:mb-1">
-                    <span class="${isToday ? 'bg-blue-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-md md:rounded-lg shadow-md today-pulse text-[10px] md:text-xs' : 'text-blue-900 ml-1 mt-1 text-[10px] md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
+                    <span class="${isToday ? 'bg-blue-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-sm shadow-md today-pulse text-[10px] md:text-xs' : 'text-blue-900 ml-0.5 mt-0.5 text-[11px] md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
                 </div>`;
 
                 let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 z-10 relative w-full overflow-hidden">`;
@@ -449,7 +451,7 @@
                     const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1 py-[1px] md:py-0.5 rounded text-[7px] md:text-[8px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-0.5">${age} th</span>` : '';
 
                     eventsHTML += `
-                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-center shrink-0">
+                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded-sm shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-center shrink-0">
                             <div class="flex items-center gap-1 min-w-0 flex-1">
                                 <i class="fas fa-birthday-cake text-yellow-300 text-[7px] md:text-[8px] shrink-0"></i>
                                 <span class="truncate text-[8px] md:text-[10px] leading-tight font-bold">${shortName}</span>
@@ -508,26 +510,27 @@
                         formattedDate = `${parseInt(dateParts[2], 10)} ${monthNames[mIndex]} ${dateParts[0]}`;
                     }
                     
+                    // Box list dibuat flex-col agar teks nama yang panjang otomatis turun ke bawah tanpa terpotong
                     html += `
-                        <div class="bg-white/70 p-2.5 md:p-3 rounded-xl border border-blue-100 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between hover:bg-white transition-colors group gap-2 md:gap-3">
-                            <div class="flex items-center gap-2.5 md:gap-3 overflow-hidden min-w-0">
-                                <div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white w-8 h-8 md:w-10 md:h-10 rounded-lg flex shrink-0 items-center justify-center font-bold shadow-md">
+                        <div class="bg-white/80 p-3 md:p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white transition-colors group gap-3 md:gap-4">
+                            <div class="flex items-start sm:items-center gap-3 overflow-hidden min-w-0">
+                                <div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white w-10 h-10 md:w-12 md:h-12 rounded-lg flex shrink-0 items-center justify-center font-bold shadow-md text-lg">
                                     ${day}
                                 </div>
-                                <div class="min-w-0">
-                                    <h4 class="font-extrabold text-blue-950 text-xs md:text-sm truncate flex items-center" title="${b.nama}">
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="font-extrabold text-blue-950 text-sm md:text-base break-words leading-tight" title="${b.nama}">
                                         ${shortName} 
-                                        <span class="text-[9px] md:text-[10px] text-yellow-700 bg-yellow-100 border border-yellow-200 px-1.5 py-0.5 rounded-md ml-2 shrink-0">${age} th</span>
+                                        <span class="text-[10px] text-yellow-700 bg-yellow-100 border border-yellow-200 px-1.5 py-0.5 rounded-md ml-1 md:ml-2 shrink-0 whitespace-nowrap inline-block mt-1 sm:mt-0">${age} th</span>
                                     </h4>
-                                    <p class="text-[9px] md:text-[10px] text-slate-500 truncate font-medium mt-0.5">${b.jabatan || 'Admin'}</p>
+                                    <p class="text-xs text-slate-500 truncate font-medium mt-0.5">${b.jabatan || 'Admin'}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1.5 shrink-0 self-end xl:self-auto">
-                                <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-2 py-1.5 md:px-3 rounded-lg flex items-center justify-center font-bold text-[10px] md:text-xs shadow-md shadow-yellow-200 transition-transform transform hover:scale-105 border border-yellow-500 gap-1.5">
-                                    <i class="fas fa-image"></i> Flyer
+                            <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto w-full sm:w-auto">
+                                <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-2 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-yellow-200 transition-transform transform hover:scale-105 border border-yellow-500 gap-1.5 w-full sm:w-auto">
+                                    <i class="fas fa-image text-sm"></i> <span class="hidden xl:inline">Flyer</span>
                                 </button>
-                                <button onclick="copyGreeting('${safeName}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white px-2 py-1.5 md:px-3 rounded-lg flex items-center justify-center font-bold text-[10px] md:text-xs shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-105 border border-[#1DA851] gap-1.5">
-                                    <i class="fab fa-whatsapp"></i> Text
+                                <button onclick="copyGreeting('${safeName}')" class="bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-2 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-105 border border-[#1DA851] gap-1.5 w-full sm:w-auto">
+                                    <i class="fab fa-whatsapp text-sm"></i> <span class="hidden xl:inline">Teks</span>
                                 </button>
                             </div>
                         </div>
