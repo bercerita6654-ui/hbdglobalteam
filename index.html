@@ -150,13 +150,12 @@
 
     <script>
         // Data State
-        // Menggunakan layanan Proxy CORS (allorigins) agar tidak diblokir (Failed to fetch) oleh keamanan browser
-        const RAW_SHEET_URL = "https://docs.google.com/spreadsheets/d/1EDwEkHpSnkdyLqzMQnVhhK9YZ7Oebw8VAZzUecF78JU/export?format=csv";
-        const SHEET_CSV_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(RAW_SHEET_URL)}`;
+        // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxraEmCV0RqiRdOOFb8KwYTrJzFw39s1dwXqIdN6cGNUd2wr8ZtnAebeKkBlWCvGGUjwg/exec";
 
         let currentDate = new Date();
         let birthdays = [
-            // Data dummy awal (tahun random tidak masalah karena yang dibaca bulan dan hari untuk pengingat kalender)
+            // Data dummy awal
             { id: 1, nama: "Admin Budi", tanggal: "1990-04-15" },
             { id: 2, nama: "Admin Siti", tanggal: "1995-04-24" },
             { id: 3, nama: "Admin Joko", tanggal: "1988-05-10" }
@@ -200,10 +199,9 @@
                 const isToday = isCurrentMonthYear && today.getDate() === day;
                 
                 // Cari apakah ada yang ultah di hari ini
-                // Format di data: YYYY-MM-DD
                 const monthStr = String(month + 1).padStart(2, '0');
                 const dayStr = String(day).padStart(2, '0');
-                const filterStr = `-${monthStr}-${dayStr}`; // Mencocokkan bulan dan tanggal saja
+                const filterStr = `-${monthStr}-${dayStr}`; 
                 
                 const daysBirthdays = birthdays.filter(b => b.tanggal.endsWith(filterStr));
 
@@ -270,7 +268,7 @@
             modal.children[0].classList.add('scale-95');
             setTimeout(() => {
                 modal.classList.add('hidden');
-            }, 300); // Sesuai durasi transisi
+            }, 300); 
         }
 
         // Detail Hari (Klik Kalender)
@@ -288,7 +286,6 @@
             } else {
                 let html = `<ul class="space-y-3">`;
                 daysBirthdays.forEach(b => {
-                    // Hitung umur (opsional)
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const currentYear = new Date().getFullYear();
                     const age = currentYear - birthYear;
@@ -356,7 +353,6 @@
                 } else {
                     try {
                         const parsedData = JSON.parse(text);
-                        // Validasi struktur
                         if (Array.isArray(parsedData) && parsedData.length > 0 && parsedData[0].hasOwnProperty('nama') && parsedData[0].hasOwnProperty('tanggal')) {
                             const currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
                             const validData = parsedData.map((item, index) => ({
@@ -388,7 +384,6 @@
             if (!dateStr) return "";
             dateStr = dateStr.trim();
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-            // Parse common spreadsheet formats like DD/MM/YYYY or DD-MM-YYYY
             let parts = dateStr.split(/[\/\-]/);
             if (parts.length === 3) {
                 if (parts[0].length === 4) { // YYYY/MM/DD
@@ -424,7 +419,6 @@
             const result = [];
             let currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
             
-            // Start from index 1 to skip header
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
                 if (row.length >= 7) {
@@ -436,7 +430,6 @@
                     const rawDate = (row[6] || '').trim();
 
                     if (namaAsli && rawDate) {
-                        // Menggabungkan nama asli dan panggilan agar terlihat rapi
                         const namaFinal = namaPanggilan ? `${namaPanggilan} (${namaAsli})` : namaAsli;
                         result.push({
                             id: ++currentMaxId,
@@ -452,32 +445,29 @@
             return result;
         }
 
-        // Sync from Google Sheets URL
+        // Sync from Google Sheets via Apps Script API
         async function syncGoogleSheets(isAuto = false) {
             const btn = document.getElementById('btnSync');
             const icon = document.getElementById('syncIcon');
             
-            // Set loading state
+            if (APPS_SCRIPT_URL === "URL_WEB_APP_ANDA_DISINI") {
+                if (!isAuto) alert("Perhatian: Anda belum memasukkan URL Apps Script Anda di dalam kode HTML (variabel APPS_SCRIPT_URL).");
+                return;
+            }
+
             btn.disabled = true;
             btn.classList.add('opacity-75', 'cursor-not-allowed');
             icon.classList.add('fa-spin');
 
             try {
-                // Menggunakan fetch ke proxy URL
-                const response = await fetch(SHEET_CSV_URL);
-                if (!response.ok) throw new Error("Gagal mengambil data dari Google Sheets. Status: " + response.status);
+                // Menarik JSON langsung dari Apps Script tanpa masalah CORS
+                const response = await fetch(APPS_SCRIPT_URL);
+                if (!response.ok) throw new Error("Gagal terhubung ke Apps Script.");
                 
-                const csvText = await response.text();
+                const newBirthdays = await response.json();
                 
-                // Deteksi jika response adalah HTML (biasanya halaman login jika akses sheet tidak publik, atau error proxy)
-                if (csvText.trim().startsWith('<!DOCTYPE html>') || csvText.trim().startsWith('<html') || csvText.trim().startsWith('<!doctype html>')) {
-                    throw new Error("Akses ditolak. Pastikan akses Google Sheets diatur ke 'Siapa saja yang memiliki link' (Anyone with the link).");
-                }
-
-                const newBirthdays = processCSVData(csvText);
-                
-                if (newBirthdays.length > 0) {
-                    birthdays = newBirthdays; // Replace completely with sheets data
+                if (newBirthdays && newBirthdays.length > 0) {
+                    birthdays = newBirthdays; // Ganti semua data dengan data dari Sheets
                     renderCalendar();
                     if (isAuto) {
                         showToast(`Auto-sync berhasil: ${newBirthdays.length} data dimuat!`);
@@ -485,17 +475,16 @@
                         showToast(`${newBirthdays.length} data disinkronkan dari Google Sheets!`);
                     }
                 } else {
-                    if (!isAuto) alert("Data berhasil ditarik, tapi tidak ada baris yang valid.");
+                    if (!isAuto) alert("Data berhasil ditarik, tapi kosong.");
                 }
             } catch (error) {
                 console.error("Sync Error:", error);
                 if (!isAuto) {
-                    alert("Gagal melakukan sinkronisasi.\n\nAlasan yang mungkin:\n1. File belum di-setting 'Siapa saja yang memiliki link'.\n2. Proxy sedang sibuk.\n\nError detail: " + error.message);
+                    alert("Gagal melakukan sinkronisasi.\n\nError detail: " + error.message);
                 } else {
-                    showToast("Gagal auto-sync. Pastikan file Google Sheets sudah diset Publik.");
+                    showToast("Gagal auto-sync. Klik tombol Sync Manual.");
                 }
             } finally {
-                // Restore button state
                 btn.disabled = false;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
                 icon.classList.remove('fa-spin');
@@ -504,14 +493,13 @@
 
         // Export/Download Data JSON
         function exportData() {
-            // Kita buang ID saat export agar JSON terlihat lebih bersih saat template diberikan
             const dataToExport = birthdays.map(b => ({ nama: b.nama, tanggal: b.tanggal }));
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
             
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href",     dataStr);
             downloadAnchorNode.setAttribute("download", "data_ulang_tahun_admin.json");
-            document.body.appendChild(downloadAnchorNode); // Diperlukan untuk firefox
+            document.body.appendChild(downloadAnchorNode); 
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
             
