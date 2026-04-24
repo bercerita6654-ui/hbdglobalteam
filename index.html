@@ -418,7 +418,6 @@
 
                 const cell = document.createElement('div');
                 
-                // Menambahkan min-h-0 agar flexbox mengizinkan isi cell menyusut dan discroll tanpa merusak grid
                 let cellClasses = "calendar-cell rounded-lg md:rounded-xl p-1 md:p-2 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden bg-white/80 min-h-0 ";
                 
                 if (isToday) {
@@ -438,26 +437,31 @@
                     <span class="${isToday ? 'bg-blue-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-md md:rounded-lg shadow-md today-pulse text-[10px] md:text-xs' : 'text-blue-900 ml-1 mt-1 text-[10px] md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
                 </div>`;
 
-                // Kontainer list ulang tahun dengan overflow-y-auto agar bisa discroll dari dalam cell jika sangat penuh
-                let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 z-10 relative w-full min-h-0 overflow-y-auto hide-scroll pb-1">`;
+                let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 z-10 relative w-full overflow-hidden">`;
                 
-                daysBirthdays.forEach((b, index) => {
+                const maxDisplay = 2;
+                
+                daysBirthdays.slice(0, maxDisplay).forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const age = year - birthYear;
                     
-                    const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1 py-[1px] md:py-0.5 rounded text-[7px] md:text-[9px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-1">${age} th</span>` : '';
+                    const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1 py-[1px] md:py-0.5 rounded text-[7px] md:text-[8px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-0.5">${age} th</span>` : '';
 
                     eventsHTML += `
-                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded md:rounded-md shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-center shrink-0">
+                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-center shrink-0">
                             <div class="flex items-center gap-1 min-w-0 flex-1">
-                                <i class="fas fa-birthday-cake text-yellow-300 text-[7px] md:text-[10px] shrink-0"></i>
-                                <span class="truncate text-[8px] md:text-[11px] leading-tight font-bold">${shortName}</span>
+                                <i class="fas fa-birthday-cake text-yellow-300 text-[7px] md:text-[8px] shrink-0"></i>
+                                <span class="truncate text-[8px] md:text-[10px] leading-tight font-bold">${shortName}</span>
                             </div>
                             ${ageHTML}
                         </div>
                     `;
                 });
+                
+                if (daysBirthdays.length > maxDisplay) {
+                    eventsHTML += `<div class="text-[7px] md:text-[9px] text-blue-800 font-extrabold text-center mt-0.5 bg-white/60 rounded py-0.5 shadow-sm">+${daysBirthdays.length - maxDisplay} lagi</div>`;
+                }
                 
                 eventsHTML += `</div>`;
 
