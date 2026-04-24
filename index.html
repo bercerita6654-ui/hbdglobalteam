@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalender Ulang Tahun Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom scrollbar untuk tampilan yang lebih rapi */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .calendar-cell {
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 z-10">
+        <div class="flex items-center gap-3">
+            <!-- Sync Data Sheets -->
+            <button id="btnSync" onclick="syncGoogleSheets()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                <i class="fas fa-sync-alt" id="syncIcon"></i> Sync Sheets
+            </button>
+            
+            <!-- Upload Data -->
+            <label class="cursor-pointer bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i class="fas fa-file-upload"></i> Unggah Data
+                <input type="file" id="fileUpload" accept=".json, .csv" class="hidden" onchange="handleFileUpload(event)">
+            </label>
+            
+            <!-- Download Data -->
+            <button onclick="exportData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i class="fas fa-file-download"></i> Unduh Data
+            </button>
+            
+            <!-- Tambah Manual -->
+            <button onclick="openModal('addModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i> Tambah
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto p-4 md:p-8 flex flex-col items-center">
+        <div class="w-full max-w-6xl bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            <!-- Calendar Controls -->
+            <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50">
+                <button onclick="changeMonth(-1)" class="p-2 hover:bg-white rounded-full text-slate-600 hover:text-indigo-600 hover:shadow-sm transition-all h-10 w-10 flex items-center justify-center">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 id="monthYearDisplay" class="text-2xl font-bold text-slate-800 capitalize">Bulan Tahun</h2>
+                <button onclick="changeMonth(1)" class="p-2 hover:bg-white rounded-full text-slate-600 hover:text-indigo-600 hover:shadow-sm transition-all h-10 w-10 flex items-center justify-center">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="p-6">
+                <!-- Days of Week -->
+                <div class="grid grid-cols-7 gap-4 mb-4">
+                    <div class="text-center font-semibold text-rose-500">Min</div>
+                    <div class="text-center font-semibold text-slate-600">Sen</div>
+                    <div class="text-center font-semibold text-slate-600">Sel</div>
+                    <div class="text-center font-semibold text-slate-600">Rab</div>
+                    <div class="text-center font-semibold text-slate-600">Kam</div>
+                    <div class="text-center font-semibold text-slate-600">Jum</div>
+                    <div class="text-center font-semibold text-indigo-500">Sab</div>
+                </div>
+
+                <!-- Days Cells -->
+                <div id="calendarGrid" class="grid grid-cols-7 gap-4">
+                    <!-- JS akan mengisi ini -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Format -->
+        <div class="w-full max-w-6xl mt-6 p-4 bg-blue-50 text-blue-800 rounded-xl flex items-start gap-3">
+            <i class="fas fa-info-circle mt-1"></i>
+            <div>
+                <p class="font-semibold">Info Integrasi Data CSV & Sheets:</p>
+                <p class="text-sm mt-1">Gunakan tombol <b>Sync Sheets</b> untuk menarik data secara otomatis dari tautan Google Sheets Anda. Anda juga dapat mengunggah file berekstensi <code>.csv</code> manual. Data akan dibaca berdasarkan kolom: <i>No, Nama, Nama Panggilan, Jabatan, Outlet, Tempat Lahir, Tanggal Lahir.</i></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Tambah Ulang Tahun -->
+    <div id="addModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800">Tambah Ulang Tahun</h3>
+                <button onclick="closeModal('addModal')" class="text-slate-400 hover:text-rose-500 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="addForm" onsubmit="handleFormSubmit(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nama Admin</label>
+                        <input type="text" id="adminName" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder="Misal: Budi Santoso">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal Lahir</label>
+                        <input type="date" id="adminDate" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="closeModal('addModal')" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Hari -->
+    <div id="dayModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="dayModalTitle" class="text-lg font-bold text-slate-800">Ulang Tahun</h3>
+                <button onclick="closeModal('dayModal')" class="text-slate-400 hover:text-rose-500 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6" id="dayModalContent">
+                <!-- Konten dinamis -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fas fa-check-circle text-emerald-400"></i>
+        <span id="toastMessage">Pesan sukses</span>
+    </div>
+
+    <script>
+        // Data State
+        // Menggunakan layanan Proxy CORS (allorigins) agar tidak diblokir (Failed to fetch) oleh keamanan browser
+        const RAW_SHEET_URL = "https://docs.google.com/spreadsheets/d/1EDwEkHpSnkdyLqzMQnVhhK9YZ7Oebw8VAZzUecF78JU/export?format=csv";
+        const SHEET_CSV_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(RAW_SHEET_URL)}`;
+
+        let currentDate = new Date();
+        let birthdays = [
+            // Data dummy awal (tahun random tidak masalah karena yang dibaca bulan dan hari untuk pengingat kalender)
+            { id: 1, nama: "Admin Budi", tanggal: "1990-04-15" },
+            { id: 2, nama: "Admin Siti", tanggal: "1995-04-24" },
+            { id: 3, nama: "Admin Joko", tanggal: "1988-05-10" }
+        ];
+
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+        // Inisialisasi Aplikasi
+        function init() {
+            renderCalendar();
+            // Panggil fungsi sync secara otomatis saat web dimuat
+            syncGoogleSheets(true);
+        }
+
+        // Render Kalender
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('monthYearDisplay').innerText = `${monthNames[month]} ${year}`;
+            
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 (Minggu) - 6 (Sabtu)
+            const daysInMonth = new Date(year, month + 1, 0).getDate(); // Total hari bulan ini
+            
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = ''; // Clear grid sebelumnya
+
+            // Kotak kosong untuk padding hari pertama
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "calendar-cell bg-slate-50/50 rounded-xl border border-transparent";
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // Tanggal hari ini untuk highlight
+            const today = new Date();
+            const isCurrentMonthYear = today.getMonth() === month && today.getFullYear() === year;
+
+            // Kotak hari-hari
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = isCurrentMonthYear && today.getDate() === day;
+                
+                // Cari apakah ada yang ultah di hari ini
+                // Format di data: YYYY-MM-DD
+                const monthStr = String(month + 1).padStart(2, '0');
+                const dayStr = String(day).padStart(2, '0');
+                const filterStr = `-${monthStr}-${dayStr}`; // Mencocokkan bulan dan tanggal saja
+                
+                const daysBirthdays = birthdays.filter(b => b.tanggal.endsWith(filterStr));
+
+                const cell = document.createElement('div');
+                let cellClasses = "calendar-cell rounded-xl p-2 border flex flex-col transition-all cursor-pointer hover:shadow-md ";
+                
+                if (isToday) {
+                    cellClasses += "bg-indigo-50 border-indigo-200";
+                } else if (daysBirthdays.length > 0) {
+                    cellClasses += "bg-amber-50 border-amber-200 hover:border-amber-300";
+                } else {
+                    cellClasses += "bg-white border-slate-100 hover:border-slate-300";
+                }
+
+                cell.className = cellClasses;
+                cell.onclick = () => showDayDetails(day, monthNames[month], daysBirthdays);
+
+                // Header Tanggal
+                let dateHTML = `<div class="font-bold flex justify-between items-start">
+                    <span class="${isToday ? 'bg-indigo-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-sm' : 'text-slate-700 ml-1'}">${day}</span>
+                    ${daysBirthdays.length > 0 ? '<i class="fas fa-gift text-amber-500 mt-1"></i>' : ''}
+                </div>`;
+
+                // List Ultah
+                let eventsHTML = `<div class="mt-2 flex-1 flex flex-col gap-1 overflow-y-auto">`;
+                daysBirthdays.slice(0, 3).forEach(b => {
+                    eventsHTML += `
+                        <div class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded truncate font-medium border border-amber-200">
+                            🎂 ${b.nama}
+                        </div>
+                    `;
+                });
+                
+                if (daysBirthdays.length > 3) {
+                    eventsHTML += `<div class="text-xs text-slate-500 font-medium px-1">+${daysBirthdays.length - 3} lainnya</div>`;
+                }
+                
+                eventsHTML += `</div>`;
+
+                cell.innerHTML = dateHTML + eventsHTML;
+                calendarGrid.appendChild(cell);
+            }
+        }
+
+        // Navigasi Bulan
+        function changeMonth(offset) {
+            currentDate.setMonth(currentDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        // Manajemen Modal
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('hidden');
+            // Trigger reflow untuk animasi
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            modal.children[0].classList.remove('scale-95');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.add('opacity-0');
+            modal.children[0].classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Sesuai durasi transisi
+        }
+
+        // Detail Hari (Klik Kalender)
+        function showDayDetails(day, monthName, daysBirthdays) {
+            document.getElementById('dayModalTitle').innerText = `${day} ${monthName}`;
+            const content = document.getElementById('dayModalContent');
+            
+            if (daysBirthdays.length === 0) {
+                content.innerHTML = `
+                    <div class="text-center py-6 text-slate-500">
+                        <i class="fas fa-calendar-times text-4xl mb-3 text-slate-300"></i>
+                        <p>Tidak ada ulang tahun admin di hari ini.</p>
+                    </div>
+                `;
+            } else {
+                let html = `<ul class="space-y-3">`;
+                daysBirthdays.forEach(b => {
+                    // Hitung umur (opsional)
+                    const birthYear = parseInt(b.tanggal.split('-')[0]);
+                    const currentYear = new Date().getFullYear();
+                    const age = currentYear - birthYear;
+                    const ageText = !isNaN(age) ? `<span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full whitespace-nowrap">Ke-${age}</span>` : '';
+
+                    const jabatanHtml = b.jabatan ? `<p class="text-xs text-indigo-600 font-medium">${b.jabatan} ${b.outlet ? '- ' + b.outlet : ''}</p>` : '';
+                    const tempatLahirStr = b.tempatLahir ? `${b.tempatLahir}, ` : '';
+
+                    html += `
+                        <li class="flex justify-between items-center bg-amber-50 border border-amber-100 p-3 rounded-xl gap-2">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="bg-amber-100 text-amber-600 w-10 h-10 rounded-full flex shrink-0 items-center justify-center text-lg">
+                                    <i class="fas fa-user-astronaut"></i>
+                                </div>
+                                <div class="truncate">
+                                    <p class="font-bold text-slate-800 truncate" title="${b.nama}">${b.nama}</p>
+                                    ${jabatanHtml}
+                                    <p class="text-xs text-slate-500 truncate">Lahir: ${tempatLahirStr}${b.tanggal}</p>
+                                </div>
+                            </div>
+                            ${ageText}
+                        </li>
+                    `;
+                });
+                html += `</ul>`;
+                content.innerHTML = html;
+            }
+            openModal('dayModal');
+        }
+
+        // Form Submit Handler
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const nama = document.getElementById('adminName').value;
+            const tanggal = document.getElementById('adminDate').value;
+
+            if (nama && tanggal) {
+                const newId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) + 1 : 1;
+                birthdays.push({ id: newId, nama, tanggal });
+                
+                document.getElementById('addForm').reset();
+                closeModal('addModal');
+                renderCalendar();
+                showToast("Ulang tahun berhasil ditambahkan!");
+            }
+        }
+
+        // Upload JSON Data
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                if (file.name.endsWith('.csv')) {
+                    const parsedData = processCSVData(text);
+                    if (parsedData.length > 0) {
+                        birthdays = [...birthdays, ...parsedData];
+                        renderCalendar();
+                        showToast(`${parsedData.length} data berhasil diunggah dari CSV!`);
+                    } else {
+                        alert("Gagal membaca data CSV atau data kosong.");
+                    }
+                } else {
+                    try {
+                        const parsedData = JSON.parse(text);
+                        // Validasi struktur
+                        if (Array.isArray(parsedData) && parsedData.length > 0 && parsedData[0].hasOwnProperty('nama') && parsedData[0].hasOwnProperty('tanggal')) {
+                            const currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
+                            const validData = parsedData.map((item, index) => ({
+                                id: currentMaxId + index + 1,
+                                nama: item.nama,
+                                jabatan: item.jabatan || '',
+                                outlet: item.outlet || '',
+                                tempatLahir: item.tempatLahir || '',
+                                tanggal: item.tanggal
+                            }));
+
+                            birthdays = [...birthdays, ...validData];
+                            renderCalendar();
+                            showToast(`${validData.length} data ulang tahun berhasil diunggah!`);
+                        } else {
+                            alert("Format JSON tidak valid!");
+                        }
+                    } catch (error) {
+                        alert("Gagal membaca file JSON.");
+                    }
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // CSV Parser Logic
+        function parseDate(dateStr) {
+            if (!dateStr) return "";
+            dateStr = dateStr.trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            // Parse common spreadsheet formats like DD/MM/YYYY or DD-MM-YYYY
+            let parts = dateStr.split(/[\/\-]/);
+            if (parts.length === 3) {
+                if (parts[0].length === 4) { // YYYY/MM/DD
+                    return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+                } else if (parts[2].length === 4) { // DD/MM/YYYY
+                    return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                } else if (parts[2].length === 2) { // DD/MM/YY
+                    let year = parseInt(parts[2]) > 50 ? '19'+parts[2] : '20'+parts[2];
+                    return `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                }
+            }
+            return dateStr;
+        }
+
+        function csvToArray(text) {
+            let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
+            for (l of text) {
+                if ('"' === l) {
+                    if (s && l === p) row[i] += l;
+                    s = !s;
+                } else if (',' === l && s) l = row[++i] = '';
+                else if ('\n' === l && s) {
+                    if ('\r' === p) row[i] = row[i].slice(0, -1);
+                    row = ret[++r] = [l = '']; i = 0;
+                } else row[i] += l;
+                p = l;
+            }
+            return ret;
+        }
+
+        function processCSVData(csvText) {
+            const rows = csvToArray(csvText);
+            const result = [];
+            let currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
+            
+            // Start from index 1 to skip header
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length >= 7) {
+                    const namaAsli = (row[1] || '').trim();
+                    const namaPanggilan = (row[2] || '').trim();
+                    const jabatan = (row[3] || '').trim();
+                    const outlet = (row[4] || '').trim();
+                    const tempatLahir = (row[5] || '').trim();
+                    const rawDate = (row[6] || '').trim();
+
+                    if (namaAsli && rawDate) {
+                        // Menggabungkan nama asli dan panggilan agar terlihat rapi
+                        const namaFinal = namaPanggilan ? `${namaPanggilan} (${namaAsli})` : namaAsli;
+                        result.push({
+                            id: ++currentMaxId,
+                            nama: namaFinal,
+                            jabatan: jabatan,
+                            outlet: outlet,
+                            tempatLahir: tempatLahir,
+                            tanggal: parseDate(rawDate)
+                        });
+                    }
+                }
+            }
+            return result;
+        }
+
+        // Sync from Google Sheets URL
+        async function syncGoogleSheets(isAuto = false) {
+            const btn = document.getElementById('btnSync');
+            const icon = document.getElementById('syncIcon');
+            
+            // Set loading state
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            icon.classList.add('fa-spin');
+
+            try {
+                // Menggunakan fetch ke proxy URL
+                const response = await fetch(SHEET_CSV_URL);
+                if (!response.ok) throw new Error("Gagal mengambil data dari Google Sheets. Status: " + response.status);
+                
+                const csvText = await response.text();
+                
+                // Deteksi jika response adalah HTML (biasanya halaman login jika akses sheet tidak publik, atau error proxy)
+                if (csvText.trim().startsWith('<!DOCTYPE html>') || csvText.trim().startsWith('<html') || csvText.trim().startsWith('<!doctype html>')) {
+                    throw new Error("Akses ditolak. Pastikan akses Google Sheets diatur ke 'Siapa saja yang memiliki link' (Anyone with the link).");
+                }
+
+                const newBirthdays = processCSVData(csvText);
+                
+                if (newBirthdays.length > 0) {
+                    birthdays = newBirthdays; // Replace completely with sheets data
+                    renderCalendar();
+                    if (isAuto) {
+                        showToast(`Auto-sync berhasil: ${newBirthdays.length} data dimuat!`);
+                    } else {
+                        showToast(`${newBirthdays.length} data disinkronkan dari Google Sheets!`);
+                    }
+                } else {
+                    if (!isAuto) alert("Data berhasil ditarik, tapi tidak ada baris yang valid.");
+                }
+            } catch (error) {
+                console.error("Sync Error:", error);
+                if (!isAuto) {
+                    alert("Gagal melakukan sinkronisasi.\n\nAlasan yang mungkin:\n1. File belum di-setting 'Siapa saja yang memiliki link'.\n2. Proxy sedang sibuk.\n\nError detail: " + error.message);
+                } else {
+                    showToast("Gagal auto-sync. Pastikan file Google Sheets sudah diset Publik.");
+                }
+            } finally {
+                // Restore button state
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                icon.classList.remove('fa-spin');
+            }
+        }
+
+        // Export/Download Data JSON
+        function exportData() {
+            // Kita buang ID saat export agar JSON terlihat lebih bersih saat template diberikan
+            const dataToExport = birthdays.map(b => ({ nama: b.nama, tanggal: b.tanggal }));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+            
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "data_ulang_tahun_admin.json");
+            document.body.appendChild(downloadAnchorNode); // Diperlukan untuk firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            
+            showToast("Data berhasil diunduh.");
+        }
+
+        // Toast Notifikasi
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Start
+        window.onload = init;
+
+    </script>
+</body>
+</html>
