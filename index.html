@@ -45,7 +45,7 @@
             </div>
             <div>
                 <h1 class="text-lg md:text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-slate-800">Kalender Ultah Admin</h1>
-                <p class="text-[10px] md:text-xs font-medium text-slate-500">PT Global Mart Sejahtera</p>
+                <p class="text-[10px] md:text-xs font-medium text-slate-500">CV. GLOBAL JAYA SEJAHTERA</p>
             </div>
         </div>
         
@@ -53,15 +53,6 @@
             <button id="btnSync" onclick="syncGoogleSheets()" class="bg-white border border-slate-200 hover:bg-slate-50 hover:border-indigo-300 text-slate-700 px-3 md:px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 group text-sm md:text-base">
                 <i class="fas fa-sync-alt text-indigo-500 group-hover:rotate-180 transition-transform duration-500" id="syncIcon"></i> <span class="hidden sm:inline">Sync Sheets</span>
             </button>
-            
-            <button onclick="downloadTemplate()" class="bg-white border border-slate-200 hover:bg-slate-50 hover:border-amber-300 text-slate-700 px-3 md:px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 text-sm md:text-base">
-                <i class="fas fa-table text-amber-500"></i> <span class="hidden sm:inline">Template</span>
-            </button>
-
-            <label class="cursor-pointer bg-white border border-slate-200 hover:bg-slate-50 hover:border-emerald-300 text-slate-700 px-3 md:px-4 py-2 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 text-sm md:text-base">
-                <i class="fas fa-file-upload text-emerald-500"></i> <span class="hidden sm:inline">Unggah</span>
-                <input type="file" id="fileUpload" accept=".json, .csv" class="hidden" onchange="handleFileUpload(event)">
-            </label>
             
             <button onclick="openModal('addModal')" class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-3 md:px-4 py-2 rounded-xl font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center gap-2 transform hover:-translate-y-0.5 text-sm md:text-base">
                 <i class="fas fa-plus"></i> <span class="hidden sm:inline">Tambah</span>
@@ -102,22 +93,6 @@
                 <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-4">
                     <!-- JS akan mengisi ini -->
                 </div>
-            </div>
-        </div>
-        
-        <!-- Info Format -->
-        <div class="w-full max-w-6xl mt-6 md:mt-8 p-4 md:p-5 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl flex flex-col md:flex-row items-start gap-4 shadow-sm">
-            <div class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-full flex shrink-0 items-center justify-center text-lg">
-                <i class="fas fa-lightbulb"></i>
-            </div>
-            <div>
-                <p class="font-bold text-slate-800 text-base md:text-lg">Tips Integrasi Google Sheets</p>
-                <ol class="text-xs md:text-sm mt-2 text-slate-600 list-decimal ml-4 space-y-1.5 font-medium">
-                    <li>Klik tombol <b class="text-slate-800">Template</b> di atas untuk mengunduh format tabel standar.</li>
-                    <li>Buka Google Sheets baru, klik <b>File > Impor > Upload</b> file template tersebut.</li>
-                    <li>Setelah data diisi, klik <b>File > Bagikan > Publikasikan ke web</b> (Pilih: Seluruh Dokumen & .csv).</li>
-                    <li>Ganti link pada variabel <code class="bg-slate-100 px-1 rounded break-all">SHEET_CSV_URL</code> di dalam kode dengan link baru Anda agar otomatis tersinkronisasi.</li>
-                </ol>
             </div>
         </div>
     </main>
@@ -206,7 +181,7 @@
             let shortName = fullName.split(' (')[0].trim();
             if(!shortName) shortName = fullName; 
             
-            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
+            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 Keluarga besar GLOBAL JAYA SEJAHTERA mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
             
             const textArea = document.createElement("textarea");
             textArea.value = template;
@@ -472,47 +447,6 @@
             });
         }
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                if (file.name.endsWith('.csv')) {
-                    processCSVWithPapaParse(text, (parsedData) => {
-                        if (parsedData.length > 0) {
-                            birthdays = [...birthdays, ...parsedData];
-                            renderCalendar();
-                            showToast(`${parsedData.length} data berhasil diunggah!`);
-                        }
-                    });
-                } else {
-                    try {
-                        const parsedData = JSON.parse(text);
-                        if (Array.isArray(parsedData) && parsedData.length > 0 && parsedData[0].hasOwnProperty('nama')) {
-                            const currentMaxId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) : 0;
-                            const validData = parsedData.map((item, index) => ({
-                                id: currentMaxId + index + 1,
-                                nama: item.nama,
-                                jabatan: item.jabatan || '',
-                                outlet: item.outlet || '',
-                                tempatLahir: item.tempatLahir || '',
-                                tanggal: parseDate(item.tanggal)
-                            }));
-                            birthdays = [...birthdays, ...validData];
-                            renderCalendar();
-                            showToast(`${validData.length} data berhasil diunggah!`);
-                        }
-                    } catch (error) {
-                        alert("Format file tidak valid.");
-                    }
-                }
-                event.target.value = '';
-            };
-            reader.readAsText(file);
-        }
-
         async function syncGoogleSheets(isAuto = false) {
             const btn = document.getElementById('btnSync');
             const icon = document.getElementById('syncIcon');
@@ -560,28 +494,6 @@
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
                 icon.classList.remove('fa-spin');
             }
-        }
-
-        function downloadTemplate() {
-            const headers = ["No", "Nama", "Nama Panggilan", "Jabatan", "Outlet", "Tempat Lahir", "Tanggal Lahir"];
-            const currDate = new Date();
-            const yyyy = currDate.getFullYear();
-            const mm = String(currDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(currDate.getDate()).padStart(2, '0');
-            
-            const sampleData1 = ["1", "Budi Santoso", "Budi", "Manager", "Pusat", "Jakarta", `${yyyy}-${mm}-${dd}`];
-            const sampleData2 = ["2", "Siti Aminah", "Siti", "Staff", "Cabang 1", "Bandung", "1995-08-15"];
-
-            const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + sampleData1.join(",") + "\n" + sampleData2.join(",");
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Template_Data_Ulang_Tahun.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("Template CSV berhasil diunduh.");
         }
 
         function showToast(message) {
