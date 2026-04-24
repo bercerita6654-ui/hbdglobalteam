@@ -256,7 +256,7 @@
                 fullName = match[1].trim();
             }
 
-            // Ganti Tahun Lahir menjadi Tahun Berjalan
+            // Ganti Tahun Lahir menjadi Tahun Berjalan (Tahun Hari Ini)
             const currentYear = new Date().getFullYear();
             const flyerDate = tanggalLahir.trim().replace(/\d{4}$/, currentYear);
 
@@ -284,9 +284,26 @@
             ctx.fillStyle = '#f1f5f9'; // Top curve slightly darker for depth
             ctx.beginPath(); ctx.ellipse(540, 210, 140, 20, 0, 0, Math.PI*2); ctx.fill(); 
 
-            // Pita Tier 1 (Biru Tua)
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(400, 270, 280, 15);
+            // Simulasikan Logo Global Mart melengkung di kue tier 1
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(415, 230);
+            ctx.quadraticCurveTo(540, 255, 665, 230);
+            ctx.lineTo(665, 280);
+            ctx.quadraticCurveTo(540, 305, 415, 280);
+            ctx.closePath();
+            ctx.fillStyle = '#ffff00'; // Kuning Logo
+            ctx.fill();
+            
+            // Teks Logo
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#0000ff'; // Biru tulisan GLOBAL MART
+            ctx.font = '900 32px "Arial Black", Arial, sans-serif';
+            ctx.fillText('GLOBAL MART', 540, 265);
+            ctx.fillStyle = '#ff0000'; // Merah tulisan bawahnya
+            ctx.font = '900 11px "Arial Black", Arial, sans-serif';
+            ctx.fillText('ALAT TULIS KANTOR & SEKOLAH', 540, 283);
+            ctx.restore();
 
             // Kue Tier 2 (Atas Kuning)
             ctx.fillStyle = '#fde047'; 
@@ -322,30 +339,59 @@
 
             // Teks "to :" (Putih)
             ctx.fillStyle = '#ffffff';
-            ctx.font = '500 40px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText('to :', 540, 540);
+            ctx.font = '500 35px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText('to :', 540, 530);
 
             // Nama Orang Lengkap (Putih - Dibatasi max width 900px agar tidak keluar jalur)
             ctx.fillStyle = '#ffffff';
             ctx.font = '900 85px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText(fullName.toUpperCase(), 540, 650, 900);
+            ctx.fillText(fullName.toUpperCase(), 540, 640, 900);
 
             // Tanggal Lahir dengan Tahun Berjalan (Biru Muda)
             ctx.fillStyle = '#93c5fd'; 
-            ctx.font = 'bold 45px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText(flyerDate, 540, 740);
+            ctx.font = 'bold 40px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText(flyerDate, 540, 720);
 
             // Garis Pembatas Halus
             ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.fillRect(340, 820, 400, 3);
+            ctx.fillRect(340, 810, 400, 3);
 
             // Footer / Harapan (Multiline sesuai instruksi)
             ctx.fillStyle = '#ffffff';
             ctx.font = '400 30px "Plus Jakarta Sans", Arial, sans-serif';
-            ctx.fillText('kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu.', 540, 900);
-            ctx.fillText('Semoga sehat selalu, panjang umur, semangat & sukses selalu. ✨', 540, 950);
+            ctx.fillText('kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu.', 540, 890);
+            ctx.fillText('Semoga sehat selalu, panjang umur, semangat & sukses selalu. ✨', 540, 940);
 
-            // 5. Download file gambar
+            // 6. Logo Instagram & Username
+            ctx.save();
+            const igX = 430; 
+            const igY = 1010;
+            
+            // Ikon IG Box
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            if(ctx.roundRect) {
+                ctx.roundRect(igX - 16, igY - 16, 32, 32, 8);
+            } else {
+                ctx.rect(igX - 16, igY - 16, 32, 32);
+            }
+            ctx.stroke();
+            // Inner circle
+            ctx.beginPath(); ctx.arc(igX, igY, 8, 0, Math.PI * 2); ctx.stroke();
+            // Dot
+            ctx.beginPath(); ctx.arc(igX + 8, igY - 8, 1.5, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+
+            // Teks IG
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '600 26px "Plus Jakarta Sans", Arial, sans-serif';
+            ctx.fillText('globalmart.id', igX + 28, igY + 2);
+            ctx.restore();
+
+            // 7. Download file gambar
             const link = document.createElement('a');
             link.download = `Flyer_Ultah_${fullName.replace(/\s+/g, '_')}.png`;
             link.href = canvas.toDataURL('image/png');
