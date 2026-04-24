@@ -150,7 +150,6 @@
 
     <script>
         // Data State
-        // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxraEmCV0RqiRdOOFb8KwYTrJzFw39s1dwXqIdN6cGNUd2wr8ZtnAebeKkBlWCvGGUjwg/exec";
 
         let currentDate = new Date();
@@ -166,7 +165,6 @@
         // Inisialisasi Aplikasi
         function init() {
             renderCalendar();
-            // Panggil fungsi sync secara otomatis saat web dimuat
             syncGoogleSheets(true);
         }
 
@@ -198,12 +196,16 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const isToday = isCurrentMonthYear && today.getDate() === day;
                 
-                // Cari apakah ada yang ultah di hari ini
+                // Format matching dengan padding dua digit
                 const monthStr = String(month + 1).padStart(2, '0');
                 const dayStr = String(day).padStart(2, '0');
                 const filterStr = `-${monthStr}-${dayStr}`; 
                 
-                const daysBirthdays = birthdays.filter(b => b.tanggal.endsWith(filterStr));
+                // Cocokkan data ulang tahun dengan tanggal kalender
+                const daysBirthdays = birthdays.filter(b => {
+                    if(!b.tanggal) return false;
+                    return b.tanggal.endsWith(filterStr);
+                });
 
                 const cell = document.createElement('div');
                 let cellClasses = "calendar-cell rounded-xl p-2 border flex flex-col transition-all cursor-pointer hover:shadow-md ";
@@ -256,7 +258,6 @@
         function openModal(id) {
             const modal = document.getElementById(id);
             modal.classList.remove('hidden');
-            // Trigger reflow untuk animasi
             void modal.offsetWidth;
             modal.classList.remove('opacity-0');
             modal.children[0].classList.remove('scale-95');
@@ -361,7 +362,7 @@
                                 jabatan: item.jabatan || '',
                                 outlet: item.outlet || '',
                                 tempatLahir: item.tempatLahir || '',
-                                tanggal: item.tanggal
+                                tanggal: parseDate(item.tanggal)
                             }));
 
                             birthdays = [...birthdays, ...validData];
@@ -379,11 +380,18 @@
             reader.readAsText(file);
         }
 
-        // CSV Parser Logic
+        // Parsing dan Standarisasi format Tanggal
         function parseDate(dateStr) {
             if (!dateStr) return "";
-            dateStr = dateStr.trim();
+            dateStr = String(dateStr).trim();
+            
+            // Antisipasi jika format tanggal ISO (mengandung T seperti 1990-04-14T17:00:00Z)
+            if (dateStr.includes('T')) {
+                dateStr = dateStr.split('T')[0];
+            }
+
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            
             let parts = dateStr.split(/[\/\-]/);
             if (parts.length === 3) {
                 if (parts[0].length === 4) { // YYYY/MM/DD
@@ -449,40 +457,56 @@
         async function syncGoogleSheets(isAuto = false) {
             const btn = document.getElementById('btnSync');
             const icon = document.getElementById('syncIcon');
-            
-            if (APPS_SCRIPT_URL === "URL_WEB_APP_ANDA_DISINI") {
-                if (!isAuto) alert("Perhatian: Anda belum memasukkan URL Apps Script Anda di dalam kode HTML (variabel APPS_SCRIPT_URL).");
-                return;
-            }
 
             btn.disabled = true;
             btn.classList.add('opacity-75', 'cursor-not-allowed');
             icon.classList.add('fa-spin');
 
             try {
-                // Menarik JSON langsung dari Apps Script tanpa masalah CORS
                 const response = await fetch(APPS_SCRIPT_URL);
-                if (!response.ok) throw new Error("Gagal terhubung ke Apps Script.");
+                if (!response.ok) throw new Error("Gagal terhubung ke URL Apps Script.");
                 
-                const newBirthdays = await response.json();
+                // Ambil data dalam bentuk teks terlebih dahulu
+                const textResponse = await response.text();
+                
+                // Deteksi Dini: Jika response berupa kode HTML Google Login
+                if (textResponse.trim().toLowerCase().startsWith('<!doctype') || textResponse.trim().toLowerCase().startsWith('<html')) {
+                    throw new Error("Akses ditolak oleh Google. \n\nPastikan di Apps Script:\n1. Akses disetel ke 'Anyone' (Siapa saja)\n2. Anda sudah mengklik 'New Deployment' setelah mengubah kode/akses.");
+                }
+
+                // Parse teks ke JSON
+                let newBirthdays = [];
+                try {
+                    newBirthdays = JSON.parse(textResponse);
+                } catch (e) {
+                    throw new Error("Format data yang ditarik tidak valid (bukan JSON).");
+                }
                 
                 if (newBirthdays && newBirthdays.length > 0) {
-                    birthdays = newBirthdays; // Ganti semua data dengan data dari Sheets
+                    // STANDARISASI ULANG FORMAT TANGGAL
+                    // Untuk memastikan datanya tidak rusak atau formatnya salah saat ditarik
+                    birthdays = newBirthdays.map(b => ({
+                        ...b,
+                        tanggal: parseDate(b.tanggal)
+                    }));
+                    
                     renderCalendar();
+                    
                     if (isAuto) {
                         showToast(`Auto-sync berhasil: ${newBirthdays.length} data dimuat!`);
                     } else {
                         showToast(`${newBirthdays.length} data disinkronkan dari Google Sheets!`);
                     }
                 } else {
-                    if (!isAuto) alert("Data berhasil ditarik, tapi kosong.");
+                    if (!isAuto) alert("Data berhasil ditarik, tapi kosong. Pastikan kolom di Google Sheets terisi.");
                 }
             } catch (error) {
                 console.error("Sync Error:", error);
                 if (!isAuto) {
-                    alert("Gagal melakukan sinkronisasi.\n\nError detail: " + error.message);
+                    alert("Gagal melakukan sinkronisasi.\n\nDetail: " + error.message);
                 } else {
-                    showToast("Gagal auto-sync. Klik tombol Sync Manual.");
+                    // Hanya toast jika error saat auto-sync
+                    showToast("Gagal auto-sync. Klik tombol Sync Manual untuk melihat errornya.");
                 }
             } finally {
                 btn.disabled = false;
