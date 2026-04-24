@@ -25,6 +25,10 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         
+        /* Garansi tinggi minimal agar kotak tidak hancur sama sekali di layar ekstrem */
+        .calendar-cell { min-height: 45px; }
+        @media (min-width: 768px) { .calendar-cell { min-height: 60px; } }
+
         /* Animasi Kustom */
         @keyframes soft-pulse {
             0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
@@ -61,9 +65,9 @@
     </div>
 
     <!-- Header / Navbar -->
-    <header class="mx-2 md:mx-4 mt-2 md:mt-4 glass-panel shadow-lg shadow-blue-100/50 rounded-2xl px-4 md:px-6 py-2.5 md:py-3 flex justify-between items-center z-20 shrink-0 border-b border-blue-100">
+    <header class="mx-2 md:mx-4 mt-2 md:mt-4 glass-panel shadow-lg shadow-blue-100/50 rounded-2xl px-4 md:px-6 py-2 md:py-3 flex justify-between items-center z-20 shrink-0 border-b border-blue-100">
         <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-tr from-blue-500 to-blue-700 text-white p-2 md:p-2.5 rounded-xl shadow-md shadow-blue-200">
+            <div class="bg-gradient-to-tr from-blue-500 to-blue-700 text-white p-2 rounded-xl shadow-md shadow-blue-200">
                 <i class="fas fa-birthday-cake text-base md:text-xl text-yellow-300 animate-bounce" style="animation-duration: 2.5s;"></i>
             </div>
             <div>
@@ -89,34 +93,35 @@
         <div class="w-full max-w-7xl glass-panel rounded-3xl shadow-2xl shadow-blue-200/40 flex flex-col h-full overflow-hidden border border-white">
             
             <!-- Calendar Controls -->
-            <div class="flex justify-between items-center p-3 md:p-5 border-b border-blue-100 bg-white/40 shrink-0">
-                <button onclick="changeMonth(-1)" class="p-1.5 md:p-2 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
+            <div class="flex justify-between items-center p-2.5 md:p-4 border-b border-blue-100 bg-white/40 shrink-0">
+                <button onclick="changeMonth(-1)" class="p-1.5 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
                     <i class="fas fa-chevron-left text-xs md:text-sm"></i>
                 </button>
                 <div class="text-center">
-                    <h2 id="monthYearDisplay" class="text-lg md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 capitalize tracking-tight drop-shadow-sm">Bulan Tahun</h2>
+                    <h2 id="monthYearDisplay" class="text-lg md:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 capitalize tracking-tight drop-shadow-sm">Bulan Tahun</h2>
                 </div>
-                <button onclick="changeMonth(1)" class="p-1.5 md:p-2 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
+                <button onclick="changeMonth(1)" class="p-1.5 bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 rounded-xl text-blue-600 hover:text-blue-800 shadow-sm transition-all h-8 w-8 md:h-10 md:w-10 flex items-center justify-center transform hover:scale-105">
                     <i class="fas fa-chevron-right text-xs md:text-sm"></i>
                 </button>
             </div>
 
             <!-- Calendar Grid Container -->
-            <div class="p-2 md:p-5 flex-1 flex flex-col min-h-0 overflow-hidden bg-white/30">
+            <div class="p-2 md:p-4 flex-1 flex flex-col min-h-0 overflow-hidden bg-white/30">
                 <!-- Days of Week -->
-                <div class="grid grid-cols-7 gap-1 md:gap-3 mb-2 md:mb-3 shrink-0">
-                    <div class="text-center font-bold text-rose-500 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Min</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Sen</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Sel</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Rab</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Kam</div>
-                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Jum</div>
-                    <div class="text-center font-bold text-yellow-600 uppercase text-[10px] md:text-sm tracking-widest bg-white rounded-lg py-1 md:py-2 shadow-sm border border-blue-50">Sab</div>
+                <div class="grid grid-cols-7 gap-1 md:gap-2 mb-1.5 md:mb-2 shrink-0">
+                    <div class="text-center font-bold text-rose-500 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Min</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Sen</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Sel</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Rab</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Kam</div>
+                    <div class="text-center font-bold text-blue-800 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Jum</div>
+                    <div class="text-center font-bold text-yellow-600 uppercase text-[10px] md:text-xs tracking-widest bg-white rounded-lg py-1 shadow-sm border border-blue-50">Sab</div>
                 </div>
 
-                <!-- Days Cells -->
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-3 flex-1 auto-rows-fr min-h-0">
-                    <!-- JS akan mengisi ini -->
+                <!-- Days Cells (Grid Utama) -->
+                <!-- Menambahkan min-h-0 agar flex bisa mendistribusikan sisa tinggi ruang sepenuhnya -->
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2 flex-1 min-h-0 h-full">
+                    <!-- JS akan mengisi grid ini dan mengontrol row-height nya secara matematis -->
                 </div>
             </div>
         </div>
@@ -240,9 +245,16 @@
             const calendarGrid = document.getElementById('calendarGrid');
             calendarGrid.innerHTML = ''; 
 
+            // ===== FIX PENTING: Kalkulasi Baris Dinamis =====
+            // Menghitung butuh berapa baris kotak (biasanya 5 atau 6)
+            const rowsCount = Math.ceil((firstDayOfMonth + daysInMonth) / 7);
+            // Memaksa CSS Grid membagi tinggi secara proporsional sesuai jumlah baris, tanpa membuat kotak gepeng.
+            calendarGrid.style.gridTemplateRows = `repeat(${rowsCount}, minmax(0, 1fr))`;
+            // ==================================================
+
             for (let i = 0; i < firstDayOfMonth; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "rounded-xl md:rounded-2xl border border-transparent bg-white/20";
+                emptyCell.className = "calendar-cell rounded-xl md:rounded-2xl border border-transparent bg-white/20";
                 calendarGrid.appendChild(emptyCell);
             }
 
@@ -262,13 +274,13 @@
 
                 const cell = document.createElement('div');
                 
-                // Styling Kalender Card (Tema Biru Kuning)
-                let cellClasses = "rounded-xl md:rounded-2xl p-1.5 md:p-3 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden min-h-0 ";
+                // Styling Kalender Card (Tema Biru Kuning) dengan overflow-hidden dan min-h-0 agar flex-children-nya merespons
+                let cellClasses = "calendar-cell rounded-lg md:rounded-xl p-1 md:p-2 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden min-h-0 ";
                 
                 if (isToday) {
                     cellClasses += "bg-white border-blue-400 shadow-lg shadow-blue-200/50 ring-2 ring-blue-500 z-10";
                 } else if (daysBirthdays.length > 0) {
-                    cellClasses += "bg-yellow-50/80 border-yellow-300 hover:border-yellow-400 hover:shadow-xl hover:shadow-yellow-200/50 hover:-translate-y-1 z-0 hover:z-10";
+                    cellClasses += "bg-yellow-50/90 border-yellow-300 hover:border-yellow-400 hover:shadow-xl hover:shadow-yellow-200/50 hover:-translate-y-1 z-0 hover:z-10";
                 } else {
                     cellClasses += "bg-white/80 border-white hover:bg-white hover:border-blue-200 hover:shadow-md z-0";
                 }
@@ -280,26 +292,28 @@
                 const decorHTML = daysBirthdays.length > 0 ? `<div class="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-yellow-400/30 text-3xl md:text-5xl transform -rotate-12 pointer-events-none transition-transform group-hover:scale-110 group-hover:text-yellow-400/50"><i class="fas fa-gift"></i></div>` : '';
 
                 // Header Tanggal
-                let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative shrink-0 mb-1 md:mb-2">
-                    <span class="${isToday ? 'bg-blue-600 text-white w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-lg md:rounded-xl shadow-md today-pulse text-[11px] md:text-sm' : 'text-blue-900 ml-1 mt-1 text-xs md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
+                let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative shrink-0 mb-0.5 md:mb-1">
+                    <span class="${isToday ? 'bg-blue-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-md md:rounded-lg shadow-md today-pulse text-[10px] md:text-xs' : 'text-blue-900 ml-0.5 mt-0.5 text-[11px] md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
                 </div>`;
 
-                // List Ultah Mini - Strukturnya diperkuat menggunakan mode BLOCK truncate (sangat stabil untuk teks panjang)
-                let eventsHTML = `<div class="flex-1 flex flex-col gap-1 md:gap-1.5 overflow-y-auto z-10 relative min-h-0 pr-0.5 hide-scroll">`;
+                // List Ultah Mini - Strukturnya diperkuat agar tidak menghilang saat layarnya pendek
+                let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 overflow-y-auto z-10 relative min-h-0 w-full hide-scroll mt-0.5">`;
                 daysBirthdays.forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
                     
                     // Hitung Usia
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const age = year - birthYear;
-                    const ageText = !isNaN(age) ? ` <span class="text-yellow-300 font-extrabold opacity-90">(${age})</span>` : '';
+                    
+                    // Age text terpisah untuk flex stabilitas
+                    const ageHTML = !isNaN(age) ? `<span class="text-yellow-300 font-extrabold text-[8px] md:text-[10px] whitespace-nowrap shrink-0 ml-1">(${age})</span>` : '';
 
-                    // Struktur block truncate memastikan teks dan usia tetap satu kesatuan utuh
+                    // Pill Ulang Tahun
                     eventsHTML += `
-                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1.5 md:px-2 py-0.5 md:py-1 rounded-md shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 text-left overflow-hidden">
-                            <div class="truncate text-[9px] md:text-[11px] leading-tight font-bold">
-                                <i class="fas fa-birthday-cake text-yellow-300 text-[8px] md:text-[10px] mr-1"></i>${shortName}${ageText}
-                            </div>
+                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 rounded md:rounded-md shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 text-left overflow-hidden flex items-center shrink-0">
+                            <i class="fas fa-birthday-cake text-yellow-300 text-[8px] md:text-[9px] mr-1 shrink-0"></i>
+                            <span class="truncate text-[8px] md:text-[10px] leading-tight font-bold flex-1 min-w-0">${shortName}</span>
+                            ${ageHTML}
                         </div>
                     `;
                 });
