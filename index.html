@@ -215,7 +215,7 @@
         }
 
         // ==========================================
-        // LOGIK UTAMA PEMBUATAN CANVAS FLYER 
+        // GENERATOR FLYER OTOMATIS (CANVAS API)
         // ==========================================
         async function getFlyerCanvas(namaStr, tanggalLahir) {
             // Memastikan font telah ter-load sebelum Canvas menggambar teks
@@ -372,7 +372,8 @@
         }
 
         // ==========================================
-        // COPY TEXT & GAMBAR KE CLIPBOARD (UNTUK WA)
+        // COPY TEXT & GAMBAR BERSAMAAN KE WA 
+        // Menggunakan Web Share API & Clipboard Fallback
         // ==========================================
         async function copyGreeting(namaStr, tanggalLahir) {
             let shortName = namaStr.split(' (')[0].trim();
@@ -380,7 +381,7 @@
             
             const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
             
-            // Fallback function: Jika browser menolak akses gambar clipboard (misal: di dalam iframe)
+            // Fungsi Cadangan: Hanya copy teks jika sistem menolak gambar
             const fallbackCopyText = () => {
                 const textArea = document.createElement("textarea");
                 textArea.value = template;
@@ -389,10 +390,9 @@
                 document.body.appendChild(textArea);
                 textArea.focus();
                 textArea.select();
-                
                 try {
                     document.execCommand('copy');
-                    showToast(`Teks ucapan untuk ${shortName} disalin! (Browser memblokir gambar)`);
+                    showToast(`Hanya teks ucapan yang disalin. (Browser memblokir gambar)`);
                 } catch (err) {
                     alert('Browser Anda tidak mendukung fitur copy otomatis.');
                 }
@@ -400,18 +400,37 @@
             };
 
             try {
-                // 1. Buat Gambar Flyer melalui Canvas
+                // Buat Gambar Flyer
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
-                // 2. Konversi Canvas ke Blob, lalu coba Copy Gambar + Teks ke Clipboard
                 canvas.toBlob(async (blob) => {
+                    const file = new File([blob], `Flyer_Ultah_${shortName}.png`, { type: 'image/png' });
+                    
+                    // 1. Coba Web Share API (Sangat sempurna untuk perangkat mobile & PWA)
+                    // Akan membuka popup bagikan ke WA langsung dengan gambar + caption
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                text: template, // Teks ini akan otomatis jadi caption di WA
+                                title: 'Ucapan Ulang Tahun'
+                            });
+                            showToast(`Berhasil dibagikan ke WhatsApp!`);
+                            return; // Jika berhasil, hentikan fungsi
+                        } catch (err) {
+                            console.log("Share dibatalkan pengguna atau gagal, mencoba copy clipboard...", err);
+                        }
+                    }
+
+                    // 2. Fallback: Copy ke Clipboard sistem (Untuk pengguna PC / Web biasa)
                     try {
                         const data = [new ClipboardItem({
                             [blob.type]: blob,
                             'text/plain': new Blob([template], { type: 'text/plain' })
                         })];
                         await navigator.clipboard.write(data);
-                        showToast(`Gambar Flyer & Ucapan WA untuk ${shortName} disalin!`);
+                        
+                        showToast(`Gambar Flyer & Teks disalin! Silakan Paste (Ctrl+V) di WhatsApp.`);
                     } catch (err) {
                         console.warn("Clipboard tingkat lanjut gagal, fallback ke copy text biasa.", err);
                         fallbackCopyText();
