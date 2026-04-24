@@ -29,23 +29,30 @@
 <body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
 
     <!-- Header / Navbar -->
-    <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 z-10">
+    <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-wrap md:flex-nowrap justify-between items-center gap-4 z-10">
         <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                <i class="fas fa-birthday-cake text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800">Kalender Ultah Admin</h1>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3">
             <!-- Sync Data Sheets -->
             <button id="btnSync" onclick="syncGoogleSheets()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
                 <i class="fas fa-sync-alt" id="syncIcon"></i> Sync Sheets
             </button>
             
+            <!-- Download Template CSV (Baru) -->
+            <button onclick="downloadTemplate()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2" title="Unduh format tabel yang benar">
+                <i class="fas fa-table"></i> Template CSV
+            </button>
+
             <!-- Upload Data -->
             <label class="cursor-pointer bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
                 <i class="fas fa-file-upload"></i> Unggah Data
                 <input type="file" id="fileUpload" accept=".json, .csv" class="hidden" onchange="handleFileUpload(event)">
             </label>
-            
-            <!-- Download Data -->
-            <button onclick="exportData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-                <i class="fas fa-file-download"></i> Unduh Data
-            </button>
             
             <!-- Tambah Manual -->
             <button onclick="openModal('addModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
@@ -93,8 +100,14 @@
         <div class="w-full max-w-6xl mt-6 p-4 bg-blue-50 text-blue-800 rounded-xl flex items-start gap-3">
             <i class="fas fa-info-circle mt-1"></i>
             <div>
-                <p class="font-semibold">Info Integrasi Data CSV & Sheets:</p>
-                <p class="text-sm mt-1">Gunakan tombol <b>Sync Sheets</b> untuk menarik data secara otomatis dari tautan Google Sheets Anda. Anda juga dapat mengunggah file berekstensi <code>.csv</code> manual. Data akan dibaca berdasarkan kolom: <i>No, Nama, Nama Panggilan, Jabatan, Outlet, Tempat Lahir, Tanggal Lahir.</i></p>
+                <p class="font-semibold">Cara Membuat Google Sheets yang Benar:</p>
+                <ol class="text-sm mt-1 list-decimal ml-4 space-y-1">
+                    <li>Klik tombol <b>Template CSV</b> di atas untuk mengunduh contoh tabel dasar.</li>
+                    <li>Buka Google Sheets baru, klik <b>File > Impor > Upload</b> file template tersebut.</li>
+                    <li>Isi data karyawan Anda. <b>Penting:</b> Format Tanggal Lahir harus standar (contoh: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>).</li>
+                    <li>Setelah selesai, klik <b>File > Bagikan > Publikasikan ke web</b>. Pilih <b>Seluruh Dokumen</b> dan <b>Nilai yang dipisahkan koma (.csv)</b>, lalu klik Publikasikan.</li>
+                    <li>Salin link yang muncul, lalu tempelkan link tersebut ke dalam variabel <code>SHEET_CSV_URL</code> di dalam kode (baris 174).</li>
+                </ol>
             </div>
         </div>
     </main>
@@ -153,11 +166,16 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOVvv7LDJJEnIxJ_GM_qcXve6LjXoe1_idUIqWowKX12BQmSEUewcHOtYepVDD9rBygkbU1G9RjpQD/pub?gid=0&single=true&output=csv";
 
         let currentDate = new Date();
+        
+        // Buat dummy data sesuai bulan ini agar langsung terlihat (Untuk Preview)
+        const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const todayDay = String(currentDate.getDate()).padStart(2, '0');
+        
         let birthdays = [
-            // Data dummy awal akan tertimpa otomatis jika sukses sync
-            { id: 1, nama: "Admin Budi", tanggal: "1990-04-15" },
-            { id: 2, nama: "Admin Siti", tanggal: "1995-04-24" },
-            { id: 3, nama: "Admin Joko", tanggal: "1988-05-10" }
+            // Dummy hari ini
+            { id: 1, nama: "Budi (Budi Santoso)", jabatan: "Manager", outlet: "Pusat", tempatLahir: "Jakarta", tanggal: `1990-${currentMonth}-${todayDay}` },
+            { id: 2, nama: "Siti (Siti Aminah)", jabatan: "Staff", outlet: "Cabang 1", tempatLahir: "Bandung", tanggal: `1995-${currentMonth}-15` },
+            { id: 3, nama: "Joko (Joko Anwar)", jabatan: "Admin", outlet: "Cabang 2", tempatLahir: "Surabaya", tanggal: `1988-${currentMonth}-28` }
         ];
 
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -334,7 +352,7 @@
             }
         }
 
-        // Upload JSON Data
+        // Upload JSON/CSV Data
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -392,7 +410,8 @@
 
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
             
-            let parts = dateStr.split(/[\/\-]/);
+            // Handle pemisah garis miring, strip, atau titik
+            let parts = dateStr.split(/[\/\-\.]/);
             if (parts.length === 3) {
                 if (parts[0].length === 4) { // YYYY/MM/DD
                     return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
@@ -453,6 +472,34 @@
             return result;
         }
 
+        // Fungsi Download Template CSV
+        function downloadTemplate() {
+            const headers = ["No", "Nama", "Nama Panggilan", "Jabatan", "Outlet", "Tempat Lahir", "Tanggal Lahir"];
+            // Buat tanggal hari ini untuk contoh
+            const currDate = new Date();
+            const yyyy = currDate.getFullYear();
+            const mm = String(currDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(currDate.getDate()).padStart(2, '0');
+            
+            const sampleData1 = ["1", "Budi Santoso", "Budi", "Manager", "Pusat", "Jakarta", `${yyyy}-${mm}-${dd}`];
+            const sampleData2 = ["2", "Siti Aminah", "Siti", "Staff", "Cabang 1", "Bandung", "1995-08-15"];
+
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + headers.join(",") + "\n" 
+                + sampleData1.join(",") + "\n"
+                + sampleData2.join(",");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Template_Data_Ulang_Tahun.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("Template CSV berhasil diunduh.");
+        }
+
         // Sync from CSV Web Link directly
         async function syncGoogleSheets(isAuto = false) {
             const btn = document.getElementById('btnSync');
@@ -491,15 +538,14 @@
                         showToast(`${newBirthdays.length} data disinkronkan dari Google Sheets!`);
                     }
                 } else {
-                    if (!isAuto) alert("Data berhasil ditarik, tapi kosong. Pastikan kolom di Google Sheets terisi.");
+                    if (!isAuto) alert("Data berhasil ditarik, tapi kosong. Kemungkinan format kolom tidak sesuai.");
                 }
             } catch (error) {
                 console.error("Sync Error:", error);
                 if (!isAuto) {
                     alert("Gagal melakukan sinkronisasi.\n\nDetail: " + error.message);
                 } else {
-                    // Hanya toast jika error saat auto-sync
-                    showToast("Gagal auto-sync. Klik tombol Sync Manual untuk melihat errornya.");
+                    showToast("Gagal auto-sync. Format CSV belum pas.");
                 }
             } finally {
                 btn.disabled = false;
