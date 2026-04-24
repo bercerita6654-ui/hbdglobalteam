@@ -280,13 +280,22 @@
                     <span class="${isToday ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-lg md:rounded-xl shadow-md today-pulse text-[11px] md:text-sm' : 'text-slate-700 ml-1 mt-1 text-xs md:text-sm group-hover:text-indigo-600 transition-colors'}">${day}</span>
                 </div>`;
 
-                // List Ultah Mini dengan Tampilan Pill Bergradasi
+                // List Ultah Mini dengan Flex Min-Width 0 Agar Text Tidak Hilang
                 let eventsHTML = `<div class="mt-1 md:mt-2 flex-1 flex flex-col gap-1 md:gap-1.5 overflow-y-auto z-10 relative min-h-0 pr-0.5">`;
                 daysBirthdays.forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
+                    
+                    // Hitung Usia
+                    const birthYear = parseInt(b.tanggal.split('-')[0]);
+                    const age = year - birthYear;
+                    const ageText = !isNaN(age) ? `<span class="bg-white/30 px-1 py-0.5 md:px-1.5 rounded text-[8px] md:text-[9px] font-semibold whitespace-nowrap shrink-0 border border-white/20 shadow-sm ml-1">${age} th</span>` : '';
+
+                    // Menambahkan flex-1 dan min-w-0 pada span nama agar bisa disingkat (truncate) tanpa menghilang
                     eventsHTML += `
-                        <div class="text-[9px] md:text-[11px] bg-gradient-to-r from-pink-500 to-rose-400 text-white px-1.5 md:px-2 py-0.5 md:py-1 rounded-md md:rounded-lg truncate font-bold shadow-sm flex items-center gap-1 md:gap-1.5 leading-none shrink-0 transform transition-transform group-hover:translate-x-0.5">
-                            <i class="fas fa-birthday-cake text-white/90 text-[8px] md:text-[10px]"></i> <span class="truncate">${shortName}</span>
+                        <div class="w-full text-[9px] md:text-[11px] bg-gradient-to-r from-pink-500 to-rose-400 text-white p-1 md:px-1.5 md:py-1 rounded-[4px] md:rounded-md shadow-sm flex items-center shrink-0 transform transition-transform group-hover:translate-x-0.5">
+                            <i class="fas fa-birthday-cake text-white/90 text-[8px] md:text-[10px] shrink-0 mr-1 md:mr-1.5"></i> 
+                            <span class="font-bold truncate flex-1 min-w-0">${shortName}</span>
+                            ${ageText}
                         </div>
                     `;
                 });
