@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        /* Font Pacifico untuk efek handwriting Happy Birthday */
+        /* Menambahkan font Pacifico untuk efek handwriting Happy Birthday */
         @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         
         body {
@@ -112,7 +112,6 @@
                     <div class="text-center font-bold text-yellow-600 uppercase text-[9px] md:text-xs tracking-widest bg-white rounded-sm py-1 shadow-sm border border-blue-50">Sab</div>
                 </div>
 
-                <!-- Grid kalender dibiarkan mengalir tanpa min-h-0 agar aspect-square bekerja sempurna -->
                 <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2 flex-1 pb-4">
                     <!-- JS mengisi ini -->
                 </div>
@@ -178,8 +177,7 @@
                     <i class="fas fa-times md:text-lg"></i>
                 </button>
             </div>
-            <!-- Content Modal bisa discroll jika terisi banyak info -->
-            <div class="p-4 md:p-6 overflow-y-auto bg-slate-50/50 custom-scrollbar" id="dayModalContent">
+            <div class="p-4 md:p-6 overflow-y-auto bg-slate-50/50" id="dayModalContent">
                 <!-- Konten dinamis -->
             </div>
         </div>
@@ -395,7 +393,7 @@
         }
 
         // ==========================================
-        // RENDER KALENDER (PERSEGI & TANGGAL BIRU)
+        // RENDER KALENDER
         // ==========================================
         function renderCalendar() {
             const year = currentDate.getFullYear();
@@ -408,6 +406,9 @@
             
             const calendarGrid = document.getElementById('calendarGrid');
             calendarGrid.innerHTML = ''; 
+
+            const rowsCount = Math.ceil((firstDayOfMonth + daysInMonth) / 7);
+            calendarGrid.style.gridTemplateRows = `repeat(${rowsCount}, minmax(0, 1fr))`;
 
             for (let i = 0; i < firstDayOfMonth; i++) {
                 const emptyCell = document.createElement('div');
@@ -431,7 +432,6 @@
 
                 const cell = document.createElement('div');
                 
-                // ASPECT SQUARE memastikan kotak kalender berbentuk persegi sempurna
                 let cellClasses = "calendar-cell rounded-sm p-1 md:p-2 border transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden bg-white/80 aspect-square ";
                 
                 if (isToday) {
@@ -447,32 +447,31 @@
 
                 const decorHTML = daysBirthdays.length > 0 ? `<div class="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-yellow-400/30 text-3xl md:text-5xl transform -rotate-12 pointer-events-none transition-transform group-hover:scale-110 group-hover:text-yellow-400/50"><i class="fas fa-gift"></i></div>` : '';
 
-                // Tanggal berwarna Biru Tegas
                 let dateHTML = `<div class="font-extrabold flex justify-between items-start z-10 relative shrink-0 mb-0.5 md:mb-1">
                     <span class="${isToday ? 'bg-blue-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-sm shadow-md today-pulse text-[10px] md:text-xs' : 'text-blue-600 font-black ml-0.5 mt-0.5 text-[11px] md:text-sm group-hover:text-blue-800 transition-colors'}">${day}</span>
                 </div>`;
 
-                // Wrapper event kalender - Bisa scroll di dalam kotak persegi jika namanya banyak
                 let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 z-10 relative w-full overflow-y-auto hide-scroll pb-1">`;
                 
-                daysBirthdays.forEach((b, index) => {
+                const maxDisplay = 2;
+                
+                daysBirthdays.slice(0, maxDisplay).forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
-                    const birthYear = parseInt(b.tanggal.split('-')[0]);
-                    const age = year - birthYear;
-                    
-                    const ageHTML = !isNaN(age) ? `<span class="bg-white/20 text-yellow-300 px-1 py-[1px] md:py-0.5 rounded text-[7px] md:text-[9px] font-extrabold whitespace-nowrap shrink-0 border border-white/10 ml-1">${age} th</span>` : '';
 
                     // Wrap Text - Jika nama panjang akan turun ke bawah secara natural (break-words whitespace-normal)
                     eventsHTML += `
-                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded-sm shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-between items-start shrink-0">
+                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded-sm shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-start items-start shrink-0">
                             <div class="flex items-start gap-1 min-w-0 flex-1">
                                 <i class="fas fa-birthday-cake text-yellow-300 text-[7px] md:text-[9px] shrink-0 mt-[3px]"></i>
                                 <span class="text-[8px] md:text-[10px] leading-tight font-bold break-words whitespace-normal text-left">${shortName}</span>
                             </div>
-                            ${ageHTML}
                         </div>
                     `;
                 });
+                
+                if (daysBirthdays.length > maxDisplay) {
+                    eventsHTML += `<div class="text-[7px] md:text-[9px] text-blue-800 font-extrabold text-center mt-0.5 bg-white/60 rounded py-0.5 shadow-sm">+${daysBirthdays.length - maxDisplay} lagi</div>`;
+                }
                 
                 eventsHTML += `</div>`;
 
