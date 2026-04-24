@@ -284,7 +284,7 @@
                     <span class="${isToday ? 'bg-blue-600 text-white w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-lg md:rounded-xl shadow-md today-pulse text-[11px] md:text-sm' : 'text-blue-900 ml-1 mt-1 text-xs md:text-sm group-hover:text-blue-600 transition-colors'}">${day}</span>
                 </div>`;
 
-                // List Ultah Mini - Strukturnya diperkuat agar tidak terpotong (menggunakan flex-between)
+                // List Ultah Mini - Strukturnya diperkuat menggunakan mode BLOCK truncate (sangat stabil untuk teks panjang)
                 let eventsHTML = `<div class="flex-1 flex flex-col gap-1 md:gap-1.5 overflow-y-auto z-10 relative min-h-0 pr-0.5 hide-scroll">`;
                 daysBirthdays.forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
@@ -292,16 +292,14 @@
                     // Hitung Usia
                     const birthYear = parseInt(b.tanggal.split('-')[0]);
                     const age = year - birthYear;
-                    const ageText = !isNaN(age) ? `<span class="bg-yellow-400 text-blue-900 px-1 py-0.5 md:px-1.5 rounded text-[8px] md:text-[9px] font-bold whitespace-nowrap shadow-sm ml-auto border border-yellow-300">${age} th</span>` : '';
+                    const ageText = !isNaN(age) ? ` <span class="text-yellow-300 font-extrabold opacity-90">(${age})</span>` : '';
 
-                    // Layout event card yang lebih stabil agar teks tidak menghilang
+                    // Struktur block truncate memastikan teks dan usia tetap satu kesatuan utuh
                     eventsHTML += `
-                        <div class="w-full bg-blue-600 text-white p-1 md:px-2 md:py-1.5 rounded-md md:rounded-lg shadow-sm flex items-center justify-between shrink-0 transform transition-transform group-hover:translate-x-0.5 border border-blue-500">
-                            <div class="flex items-center gap-1 md:gap-1.5 overflow-hidden flex-1 min-w-0">
-                                <i class="fas fa-birthday-cake text-yellow-300 text-[8px] md:text-[10px] shrink-0"></i> 
-                                <span class="font-bold truncate text-[9px] md:text-[11px]">${shortName}</span>
+                        <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1.5 md:px-2 py-0.5 md:py-1 rounded-md shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 text-left overflow-hidden">
+                            <div class="truncate text-[9px] md:text-[11px] leading-tight font-bold">
+                                <i class="fas fa-birthday-cake text-yellow-300 text-[8px] md:text-[10px] mr-1"></i>${shortName}${ageText}
                             </div>
-                            ${ageText}
                         </div>
                     `;
                 });
