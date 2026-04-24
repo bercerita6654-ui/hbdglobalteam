@@ -149,12 +149,12 @@
     </div>
 
     <script>
-        // Data State
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxraEmCV0RqiRdOOFb8KwYTrJzFw39s1dwXqIdN6cGNUd2wr8ZtnAebeKkBlWCvGGUjwg/exec";
+        // Data State - Link CSV Langsung dari Google Sheets Published
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOVvv7LDJJEnIxJ_GM_qcXve6LjXoe1_idUIqWowKX12BQmSEUewcHOtYepVDD9rBygkbU1G9RjpQD/pub?gid=0&single=true&output=csv";
 
         let currentDate = new Date();
         let birthdays = [
-            // Data dummy awal
+            // Data dummy awal akan tertimpa otomatis jika sukses sync
             { id: 1, nama: "Admin Budi", tanggal: "1990-04-15" },
             { id: 2, nama: "Admin Siti", tanggal: "1995-04-24" },
             { id: 3, nama: "Admin Joko", tanggal: "1988-05-10" }
@@ -453,7 +453,7 @@
             return result;
         }
 
-        // Sync from Google Sheets via Apps Script API
+        // Sync from CSV Web Link directly
         async function syncGoogleSheets(isAuto = false) {
             const btn = document.getElementById('btnSync');
             const icon = document.getElementById('syncIcon');
@@ -463,28 +463,21 @@
             icon.classList.add('fa-spin');
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL);
-                if (!response.ok) throw new Error("Gagal terhubung ke URL Apps Script.");
+                const response = await fetch(SHEET_CSV_URL);
+                if (!response.ok) throw new Error("Gagal terhubung ke link CSV Google Sheets.");
                 
-                // Ambil data dalam bentuk teks terlebih dahulu
                 const textResponse = await response.text();
                 
-                // Deteksi Dini: Jika response berupa kode HTML Google Login
+                // Deteksi Dini: Jika response berupa halaman HTML (biasanya tanda gagal akses)
                 if (textResponse.trim().toLowerCase().startsWith('<!doctype') || textResponse.trim().toLowerCase().startsWith('<html')) {
-                    throw new Error("Akses ditolak oleh Google. \n\nPastikan di Apps Script:\n1. Akses disetel ke 'Anyone' (Siapa saja)\n2. Anda sudah mengklik 'New Deployment' setelah mengubah kode/akses.");
+                    throw new Error("Data ditolak. Tautan gagal memberikan format CSV yang valid.");
                 }
 
-                // Parse teks ke JSON
-                let newBirthdays = [];
-                try {
-                    newBirthdays = JSON.parse(textResponse);
-                } catch (e) {
-                    throw new Error("Format data yang ditarik tidak valid (bukan JSON).");
-                }
+                // Parse teks CSV ke array objek
+                const newBirthdays = processCSVData(textResponse);
                 
                 if (newBirthdays && newBirthdays.length > 0) {
-                    // STANDARISASI ULANG FORMAT TANGGAL
-                    // Untuk memastikan datanya tidak rusak atau formatnya salah saat ditarik
+                    // Pastikan format tanggal sudah benar
                     birthdays = newBirthdays.map(b => ({
                         ...b,
                         tanggal: parseDate(b.tanggal)
