@@ -83,6 +83,22 @@
         </div>
     </header>
 
+    <!-- PENCARIAN & FILTER OUTLET (Fitur Baru) -->
+    <div class="w-full max-w-[1600px] mx-auto px-2 md:px-4 mt-2 md:mt-3 flex flex-col sm:flex-row gap-2 shrink-0 relative z-10">
+        <div class="relative flex-1 glass-panel rounded-xl shadow-sm flex items-center px-3 py-2 border border-blue-100 transition-all focus-within:ring-2 focus-within:ring-blue-400">
+            <i class="fas fa-search text-blue-400 mr-2 md:mr-3"></i>
+            <input type="text" id="searchName" placeholder="Ketik pencarian nama..." class="bg-transparent border-none outline-none w-full text-xs md:text-sm text-blue-900 placeholder-blue-400 font-medium" oninput="renderCalendar()">
+        </div>
+        <div class="relative flex-1 glass-panel rounded-xl shadow-sm flex items-center px-3 py-2 border border-blue-100 transition-all focus-within:ring-2 focus-within:ring-blue-400">
+            <i class="fas fa-map-marker-alt text-blue-400 mr-2 md:mr-3"></i>
+            <select id="filterOutlet" class="bg-transparent border-none outline-none w-full text-xs md:text-sm text-blue-900 cursor-pointer appearance-none font-bold" onchange="renderCalendar()">
+                <option value="">Semua Posisi / Outlet</option>
+                <!-- JS akan mengisi otomatis option ini -->
+            </select>
+            <i class="fas fa-chevron-down text-blue-400 ml-2 pointer-events-none text-xs"></i>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="flex-1 w-full max-w-[1600px] mx-auto p-2 md:p-4 flex flex-col lg:flex-row items-stretch gap-2 md:gap-4 relative z-10 overflow-hidden min-h-0">
         
@@ -215,14 +231,40 @@
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
         function init() {
+            populateOutlets();
             renderCalendar();
             syncGoogleSheets(true);
+        }
+
+        // ==========================================
+        // POPULASI FILTER OUTLET/POSISI OTOMATIS
+        // ==========================================
+        function populateOutlets() {
+            const select = document.getElementById('filterOutlet');
+            if (!select) return;
+            const currentVal = select.value;
+            const uniqueOutlets = [...new Set(birthdays.map(b => b.outlet).filter(o => o))].sort();
+            
+            select.innerHTML = '<option value="">Semua Posisi / Outlet</option>';
+            uniqueOutlets.forEach(outlet => {
+                const opt = document.createElement('option');
+                opt.value = outlet;
+                opt.textContent = outlet;
+                select.appendChild(opt);
+            });
+            
+            if (uniqueOutlets.includes(currentVal)) {
+                select.value = currentVal;
+            }
         }
 
         // ==========================================
         // BUKA POP-UP DETAIL DARI SIDEBAR
         // ==========================================
         window.openDetailFromSidebar = function(day) {
+            const searchName = document.getElementById('searchName') ? document.getElementById('searchName').value.toLowerCase() : '';
+            const filterOutlet = document.getElementById('filterOutlet') ? document.getElementById('filterOutlet').value : '';
+
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             const monthStr = String(month + 1).padStart(2, '0');
@@ -230,8 +272,10 @@
             const filterStr = `-${monthStr}-${dayStr}`; 
             
             const daysBirthdays = birthdays.filter(b => {
-                if(!b.tanggal) return false;
-                return b.tanggal.endsWith(filterStr);
+                if(!b.tanggal || !b.tanggal.endsWith(filterStr)) return false;
+                if(searchName && !b.nama.toLowerCase().includes(searchName)) return false;
+                if(filterOutlet && b.outlet !== filterOutlet) return false;
+                return true;
             });
 
             showDayDetails(day, monthNames[month], daysBirthdays);
@@ -239,13 +283,12 @@
 
         // ==========================================
         // PEMBUAT TEKS UCAPAN MENGGUNAKAN KODE EMOTIKON 
-        // (Dijamin 100% tidak menjadi tanda tanya di WA)
         // ==========================================
         function getMessageTemplate(namaStr) {
             let shortName = namaStr.split(' (')[0].trim();
             if(!shortName) shortName = namaStr; 
             
-            // Menggunakan Unicode desimal murni yang diterjemahkan langsung oleh JS (Bypass masalah encoding file)
+            // Menggunakan Unicode desimal murni yang diterjemahkan langsung oleh JS
             const eParty = String.fromCodePoint(129395); // 🥳
             const ePray = String.fromCodePoint(128591);  // 🙏
             const eHands = String.fromCodePoint(128588); // 🙌
@@ -255,7 +298,6 @@
 
         // ==========================================
         // BUKA LINK WHATSAPP & DOWNLOAD GAMBAR (SMART SHARE)
-        // Diformat untuk otomatis ke wa.me/628...
         // ==========================================
         async function shareToWA(namaStr, noWaStr, tanggalLahir) {
             let shortName = namaStr.split(' (')[0].trim() || namaStr;
@@ -272,7 +314,7 @@
                 }
             }
 
-            // Menyalin teks ucapan secara synchronous (mencegah diblokir browser)
+            // Menyalin teks ucapan secara synchronous
             const textArea = document.createElement("textarea");
             textArea.value = template;
             document.body.appendChild(textArea);
@@ -282,14 +324,13 @@
             
             // BUKA TAB WA SEKARANG (Synchronous) untuk menghindari Popup Blocker!
             const encodedText = encodeURIComponent(template);
-            const waUrl = cleanWa ? `https://wa.me/${cleanWa}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
+            const waUrl = cleanWa ? `https://wa.me/${cleanWa}?text=${encodedText}` : `https://api.whatsapp.com/send?text=${encodedText}`;
             const waTab = window.open(waUrl, '_blank');
             
-            // Tampilkan Alert Bantuan (Sambil menunggu gambar didownload)
-            alert(`✅ Teks ucapan telah terisi/tercopy otomatis!\n✅ Menyiapkan pengunduhan gambar...\n\nCARA KIRIM:\n1. Tekan OK.\n2. Lampirkan/tarik gambar flyer yang terunduh ke chat WhatsApp Anda.\n3. Tekan CTRL+V di kolom Caption untuk menampilkan teks!\n4. Kirim!`);
+            // Tampilkan instruksi singkat
+            showToast('Teks disalin & membuka WA... Menyiapkan Flyer.');
 
             try {
-                showToast('Mengunduh gambar flyer...');
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
                 canvas.toBlob(async (blob) => {
@@ -298,15 +339,15 @@
                     // Jika di HP (mendukung Web Share native)
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
-                            if(waTab) waTab.close(); // Tutup tab kosong karena kita pakai Share Native HP
+                            if(waTab) waTab.close(); // Tutup tab kosong
                             await navigator.share({
                                 files: [file],
-                                text: template, // Teks otomatis masuk caption di HP
+                                text: template, 
                                 title: 'Ucapan Ulang Tahun'
                             });
                             return; 
                         } catch (err) {
-                            console.log("Share native gagal/dibatalkan.");
+                            console.log("Share native batal/gagal.");
                         }
                     }
 
@@ -316,7 +357,11 @@
                     link.href = URL.createObjectURL(blob);
                     link.click();
                     
-                    showToast('Gambar berhasil diunduh!');
+                    // Alert ini tampil setelah download selesai, bertindak sebagai pengingat di window saat ini
+                    setTimeout(() => {
+                         alert(`✅ Gambar Flyer berhasil diunduh!\n✅ Teks ucapan telah terisi/disalin!\n\nLangkah di WhatsApp:\n1. Lampirkan gambar flyer yang terunduh ke chat WhatsApp.\n2. Klik di kolom Caption (Keterangan) lalu tekan [CTRL+V] / Paste!\n3. Kirim!`);
+                    }, 500);
+
                 }, 'image/png');
                 
             } catch(e) {
@@ -461,9 +506,12 @@
         }
 
         // ==========================================
-        // RENDER KALENDER (PERSEGI & TANGGAL BIRU)
+        // RENDER KALENDER (DENGAN FILTER)
         // ==========================================
         function renderCalendar() {
+            const searchName = document.getElementById('searchName') ? document.getElementById('searchName').value.toLowerCase() : '';
+            const filterOutlet = document.getElementById('filterOutlet') ? document.getElementById('filterOutlet').value : '';
+
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             
@@ -494,8 +542,10 @@
                 const filterStr = `-${monthStr}-${dayStr}`; 
                 
                 const daysBirthdays = birthdays.filter(b => {
-                    if(!b.tanggal) return false;
-                    return b.tanggal.endsWith(filterStr);
+                    if(!b.tanggal || !b.tanggal.endsWith(filterStr)) return false;
+                    if(searchName && !b.nama.toLowerCase().includes(searchName)) return false;
+                    if(filterOutlet && b.outlet !== filterOutlet) return false;
+                    return true;
                 });
 
                 const cell = document.createElement('div');
@@ -549,13 +599,21 @@
             renderSidebar(month, year);
         }
 
-        // Render Panel Sidebar Sebelah Kanan
+        // Render Panel Sidebar Sebelah Kanan (DENGAN FILTER)
         function renderSidebar(month, year) {
+            const searchName = document.getElementById('searchName') ? document.getElementById('searchName').value.toLowerCase() : '';
+            const filterOutlet = document.getElementById('filterOutlet') ? document.getElementById('filterOutlet').value : '';
+
             const sidebarContent = document.getElementById('sidebarContent');
             const monthStr = String(month + 1).padStart(2, '0');
             const filterStr = `-${monthStr}-`;
             
-            const monthBirthdays = birthdays.filter(b => b.tanggal && b.tanggal.includes(filterStr));
+            const monthBirthdays = birthdays.filter(b => {
+                if (!b.tanggal || !b.tanggal.includes(filterStr)) return false;
+                if (searchName && !b.nama.toLowerCase().includes(searchName)) return false;
+                if (filterOutlet && b.outlet !== filterOutlet) return false;
+                return true;
+            });
             
             monthBirthdays.sort((a, b) => {
                 const dayA = parseInt(a.tanggal.split('-')[2]);
@@ -568,7 +626,7 @@
                 html = `
                     <div class="text-center py-10 opacity-70">
                         <i class="fas fa-box-open text-4xl mb-3 text-blue-300"></i>
-                        <p class="font-bold text-blue-800 text-sm">Tidak ada yang ulang tahun bulan ini.</p>
+                        <p class="font-bold text-blue-800 text-sm">Tidak ada yang sesuai pencarian/filter.</p>
                     </div>`;
             } else {
                 monthBirthdays.forEach(b => {
@@ -857,6 +915,7 @@
                 processCSVWithPapaParse(textResponse, (newBirthdays) => {
                     if (newBirthdays && newBirthdays.length > 0) {
                         birthdays = newBirthdays;
+                        populateOutlets();
                         renderCalendar();
                         if (isAuto) {
                             showToast(`Auto-sync: ${newBirthdays.length} data dimuat.`);
