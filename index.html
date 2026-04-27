@@ -250,7 +250,7 @@
             const ePray = String.fromCodePoint(128591);  // 🙏
             const eHands = String.fromCodePoint(128588); // 🙌
             
-            return `Selamat Ulang Tahun, ${shortName}! ${eParty} kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ${ePray}${eHands}`;
+            return `Selamat Ulang Tahun, ${shortName}! ${eParty}  kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ${ePray}${eHands}`;
         }
 
         // ==========================================
@@ -278,32 +278,53 @@
         }
 
         // ==========================================
-        // BUKA LINK WHATSAPP & DOWNLOAD GAMBAR
+        // BUKA LINK WHATSAPP & DOWNLOAD GAMBAR (SMART SHARE)
         // ==========================================
         async function shareToWA(namaStr, noWaStr, tanggalLahir) {
-            const template = getMessageTemplate(namaStr);
             let shortName = namaStr.split(' (')[0].trim() || namaStr;
+            const template = getMessageTemplate(namaStr);
             
             try {
-                showToast('Menyiapkan gambar & membuka WA...');
+                showToast('Menyiapkan gambar flyer...');
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
                 canvas.toBlob(async (blob) => {
-                    // 1. Otomatis Download Gambarnya
-                    const link = document.createElement('a');
-                    link.download = `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    // 2. Coba Copy Image ke Clipboard (Agar bisa langsung CTRL+V di WA)
-                    try {
-                        const data = [new ClipboardItem({ 'image/png': blob })];
-                        await navigator.clipboard.write(data);
-                    } catch (err) {
-                        console.warn('Browser mencegah copy gambar otomatis', err);
+                    const file = new File([blob], `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`, { type: 'image/png' });
+
+                    // 1. Coba fitur Web Share API (Berjalan sangat sempurna di Mobile / PWA)
+                    // Akan langsung membawa Gambar & Teks jadi satu di WA Mobile.
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                text: template, // Teks ini otomatis masuk ke kolom caption di HP
+                                title: 'Ucapan Ulang Tahun'
+                            });
+                            return; // Selesai jika share HP berhasil
+                        } catch (err) {
+                            console.log("Share dibatalkan pengguna, lanjut ke mode Desktop...");
+                        }
                     }
 
-                    // 3. Setup Link WA dengan Parameter Teks (Emotikon di-encode dengan aman)
+                    // ===========================================
+                    // 2. MODE DESKTOP / WA WEB (Solusi Anti-Potong WA Web)
+                    // ===========================================
+                    
+                    // A. Kopi teks ucapan ke clipboard secara paksa 
+                    const textArea = document.createElement("textarea");
+                    textArea.value = template;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try { document.execCommand('copy'); } catch(e){}
+                    document.body.removeChild(textArea);
+
+                    // B. Download Gambar
+                    const link = document.createElement('a');
+                    link.download = file.name;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+
+                    // C. Siapkan Link WhatsApp
                     const encodedText = encodeURIComponent(template);
                     let waUrl = '';
                     if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
@@ -312,10 +333,10 @@
                         waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
                     }
 
-                    // Notifikasi bantuan untuk user
-                    alert(`✅ Gambar Flyer berhasil diunduh dan disalin!\n\nLangkah berikutnya:\n1. Klik OK untuk melanjutkan ke WhatsApp.\n2. Di kolom chat WA, tekan [CTRL + V] atau Klik Kanan -> Paste.\n\nGambar Flyer beserta Teks Ucapan akan langsung muncul!`);
+                    // D. Tampilkan instruksi dan buka WA
+                    // Penggunaan alert disini juga berfungsi mem-bypass Popup Blocker browser
+                    alert(`✅ Teks ucapan telah di-Copy!\n✅ Gambar flyer telah di-Download!\n\nLangkah di WhatsApp Web:\n1. Klik OK untuk buka chat WA.\n2. Lampirkan/tarik gambar flyer yang baru diunduh ke chat.\n3. Klik di kolom "Caption" lalu tekan [CTRL+V] / Paste.\n4. Kirim!`);
 
-                    // 4. Buka tab WhatsApp
                     window.open(waUrl, '_blank');
 
                 }, 'image/png');
@@ -325,6 +346,7 @@
                 alert('Terjadi kesalahan saat memproses data ke WhatsApp.');
             }
         }
+
 
         // ==========================================
         // GENERATOR FLYER OTOMATIS (CANVAS API)
