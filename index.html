@@ -254,94 +254,74 @@
         }
 
         // ==========================================
-        // COPY TEXT WA SAJA
-        // ==========================================
-        function copyGreeting(namaStr) {
-            const template = getMessageTemplate(namaStr);
-            
-            const textArea = document.createElement("textarea");
-            textArea.value = template;
-            textArea.style.position = "fixed";
-            textArea.style.opacity = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                let shortName = namaStr.split(' (')[0].trim() || namaStr;
-                showToast(`Teks ucapan untuk ${shortName} disalin!`);
-            } catch (err) {
-                alert('Browser Anda tidak mendukung fitur copy otomatis.');
-            }
-            document.body.removeChild(textArea);
-        }
-
-        // ==========================================
         // BUKA LINK WHATSAPP & DOWNLOAD GAMBAR (SMART SHARE)
+        // Diformat untuk otomatis ke wa.me/628...
         // ==========================================
         async function shareToWA(namaStr, noWaStr, tanggalLahir) {
             let shortName = namaStr.split(' (')[0].trim() || namaStr;
             const template = getMessageTemplate(namaStr);
             
+            // Format Nomor WA agar dipastikan menggunakan kode negara 62
+            let cleanWa = "";
+            if (noWaStr && noWaStr !== "undefined") {
+                cleanWa = noWaStr.replace(/\D/g, ''); // Hapus semua karakter non-angka
+                if (cleanWa.startsWith('0')) {
+                    cleanWa = '62' + cleanWa.substring(1);
+                } else if (cleanWa.startsWith('8')) {
+                    cleanWa = '62' + cleanWa;
+                }
+            }
+
+            // Menyalin teks ucapan secara synchronous (mencegah diblokir browser)
+            const textArea = document.createElement("textarea");
+            textArea.value = template;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try { document.execCommand('copy'); } catch(e){}
+            document.body.removeChild(textArea);
+            
+            // BUKA TAB WA SEKARANG (Synchronous) untuk menghindari Popup Blocker!
+            const encodedText = encodeURIComponent(template);
+            const waUrl = cleanWa ? `https://wa.me/${cleanWa}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
+            const waTab = window.open(waUrl, '_blank');
+            
+            // Tampilkan Alert Bantuan (Sambil menunggu gambar didownload)
+            alert(`✅ Teks ucapan telah terisi/tercopy otomatis!\n✅ Menyiapkan pengunduhan gambar...\n\nCARA KIRIM:\n1. Tekan OK.\n2. Lampirkan/tarik gambar flyer yang terunduh ke chat WhatsApp Anda.\n3. Tekan CTRL+V di kolom Caption untuk menampilkan teks!\n4. Kirim!`);
+
             try {
-                showToast('Menyiapkan gambar flyer...');
+                showToast('Mengunduh gambar flyer...');
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`, { type: 'image/png' });
 
-                    // 1. Coba fitur Web Share API (Berjalan sangat sempurna di Mobile / PWA)
+                    // Jika di HP (mendukung Web Share native)
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
+                            if(waTab) waTab.close(); // Tutup tab kosong karena kita pakai Share Native HP
                             await navigator.share({
                                 files: [file],
-                                text: template, // Teks otomatis masuk ke kolom caption di HP
+                                text: template, // Teks otomatis masuk caption di HP
                                 title: 'Ucapan Ulang Tahun'
                             });
-                            return; // Selesai jika share HP berhasil
+                            return; 
                         } catch (err) {
-                            console.log("Share dibatalkan pengguna, lanjut ke mode Desktop...");
+                            console.log("Share native gagal/dibatalkan.");
                         }
                     }
 
-                    // ===========================================
-                    // 2. MODE DESKTOP / WA WEB (Solusi Anti-Potong WA Web & Anti Popup Blocker)
-                    // ===========================================
-                    
-                    // A. Kopi teks ucapan ke clipboard secara paksa 
-                    const textArea = document.createElement("textarea");
-                    textArea.value = template;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try { document.execCommand('copy'); } catch(e){}
-                    document.body.removeChild(textArea);
-
-                    // B. Download Gambar
+                    // Mode PC/Laptop: Otomatis Download Gambar
                     const link = document.createElement('a');
                     link.download = file.name;
                     link.href = URL.createObjectURL(blob);
                     link.click();
-
-                    // C. Siapkan Link WhatsApp yang langsung ada Teks Ucapannya
-                    const encodedText = encodeURIComponent(template);
-                    let waUrl = '';
-                    if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
-                        waUrl = `https://wa.me/${noWaStr}?text=${encodedText}`;
-                    } else {
-                        waUrl = `https://wa.me/?text=${encodedText}`;
-                    }
-
-                    // D. Langsung buka WA tanpa Alert (Mencegah Popup Blocker)
-                    window.open(waUrl, '_blank');
                     
-                    showToast("Flyer Diunduh! Silakan tempel (Paste) gambar di WA Anda.");
-
+                    showToast('Gambar berhasil diunduh!');
                 }, 'image/png');
                 
             } catch(e) {
                 console.error(e);
-                showToast('Terjadi kesalahan saat memproses data ke WhatsApp.');
+                showToast('Terjadi kesalahan saat memproses gambar.');
             }
         }
 
@@ -735,11 +715,19 @@
             e.preventDefault();
             const nama = document.getElementById('adminName').value;
             const tanggal = document.getElementById('adminDate').value;
-            const noWa = document.getElementById('adminWa').value;
+            let noWa = document.getElementById('adminWa').value;
 
             if (nama && tanggal) {
+                // Formatting WA di saat form disubmit manual
+                let cleanWa = noWa.replace(/\D/g, '');
+                if (cleanWa.startsWith('0')) {
+                    cleanWa = '62' + cleanWa.substring(1);
+                } else if (cleanWa.startsWith('8')) {
+                    cleanWa = '62' + cleanWa;
+                }
+
                 const newId = birthdays.length > 0 ? Math.max(...birthdays.map(b => b.id)) + 1 : 1;
-                birthdays.push({ id: newId, nama, tanggal, noWa });
+                birthdays.push({ id: newId, nama, tanggal, noWa: cleanWa });
                 
                 document.getElementById('addForm').reset();
                 closeModal('addModal');
