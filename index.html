@@ -292,12 +292,11 @@
                     const file = new File([blob], `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`, { type: 'image/png' });
 
                     // 1. Coba fitur Web Share API (Berjalan sangat sempurna di Mobile / PWA)
-                    // Akan langsung membawa Gambar & Teks jadi satu di WA Mobile.
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
                                 files: [file],
-                                text: template, // Teks ini otomatis masuk ke kolom caption di HP
+                                text: template, // Teks otomatis masuk ke kolom caption di HP
                                 title: 'Ucapan Ulang Tahun'
                             });
                             return; // Selesai jika share HP berhasil
@@ -307,7 +306,7 @@
                     }
 
                     // ===========================================
-                    // 2. MODE DESKTOP / WA WEB (Solusi Anti-Potong WA Web)
+                    // 2. MODE DESKTOP / WA WEB (Solusi Anti-Potong WA Web & Anti Popup Blocker)
                     // ===========================================
                     
                     // A. Kopi teks ucapan ke clipboard secara paksa 
@@ -324,26 +323,25 @@
                     link.href = URL.createObjectURL(blob);
                     link.click();
 
-                    // C. Siapkan Link WhatsApp
+                    // C. Siapkan Link WhatsApp yang langsung ada Teks Ucapannya
                     const encodedText = encodeURIComponent(template);
                     let waUrl = '';
                     if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
                         waUrl = `https://wa.me/${noWaStr}?text=${encodedText}`;
                     } else {
-                        waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+                        waUrl = `https://wa.me/?text=${encodedText}`;
                     }
 
-                    // D. Tampilkan instruksi dan buka WA
-                    // Penggunaan alert disini juga berfungsi mem-bypass Popup Blocker browser
-                    alert(`✅ Teks ucapan telah di-Copy!\n✅ Gambar flyer telah di-Download!\n\nLangkah di WhatsApp Web:\n1. Klik OK untuk buka chat WA.\n2. Lampirkan/tarik gambar flyer yang baru diunduh ke chat.\n3. Klik di kolom "Caption" lalu tekan [CTRL+V] / Paste.\n4. Kirim!`);
-
+                    // D. Langsung buka WA tanpa Alert (Mencegah Popup Blocker)
                     window.open(waUrl, '_blank');
+                    
+                    showToast("Flyer Diunduh! Silakan tempel (Paste) gambar di WA Anda.");
 
                 }, 'image/png');
                 
             } catch(e) {
                 console.error(e);
-                alert('Terjadi kesalahan saat memproses data ke WhatsApp.');
+                showToast('Terjadi kesalahan saat memproses data ke WhatsApp.');
             }
         }
 
@@ -804,17 +802,20 @@
                             const outlet = (row[4] || '').trim();
                             const tempatLahir = (row[5] || '').trim();
                             const rawDate = (row[6] || '').trim();
+                            
                             // Ambil No WA dari Kolom ke-8 (index 7)
-                            const rawNoWa = row.length >= 8 ? (row[7] || '').trim() : '';
+                            let rawNoWa = row.length >= 8 ? (row[7] || '').trim() : '';
 
                             if (namaAsli && rawDate) {
                                 const namaFinal = namaPanggilan ? `${namaPanggilan} (${namaAsli})` : namaAsli;
                                 
                                 // Bersihkan nomor WA (hapus karakter selain angka)
                                 let cleanWa = rawNoWa.replace(/\D/g, '');
-                                // Otomatis ubah awalan 0 menjadi 62 standar WhatsApp
+                                // Otomatis ubah awalan ke 62 standar WhatsApp
                                 if (cleanWa.startsWith('0')) {
                                     cleanWa = '62' + cleanWa.substring(1);
+                                } else if (cleanWa.startsWith('8')) {
+                                    cleanWa = '62' + cleanWa;
                                 }
 
                                 parsedResult.push({
