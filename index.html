@@ -238,38 +238,48 @@
         }
 
         // ==========================================
-        // BUKA LINK WHATSAPP & COPY TEXT (Fitur Baru)
+        // BUKA LINK WHATSAPP & AUTO-COPY GAMBAR
         // ==========================================
-        function shareToWA(namaStr, noWaStr) {
+        async function shareToWA(namaStr, noWaStr, tanggalLahir) {
             let shortName = namaStr.split(' (')[0].trim();
             if(!shortName) shortName = namaStr; 
             
-            const template = `Selamat Ulang Tahun, ${shortName}! 🎂🎉 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ✨`;
+            // Format emotikon yang diminta
+            const template = `Selamat Ulang Tahun, ${shortName}! 🥳  kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! 🙏🙌`;
             
-            // Lakukan copy text ke clipboard sebagai backup (biar pengguna bisa langsung Paste)
-            const textArea = document.createElement("textarea");
-            textArea.value = template;
-            textArea.style.position = "fixed";
-            textArea.style.opacity = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
             try {
-                document.execCommand('copy');
-            } catch (err) {
-                console.warn('Gagal copy text ke clipboard');
-            }
-            document.body.removeChild(textArea);
+                showToast('Menyiapkan gambar flyer...');
+                const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
+                
+                canvas.toBlob(async (blob) => {
+                    // Menyalin gambar ke Clipboard
+                    try {
+                        const data = [new ClipboardItem({ 'image/png': blob })];
+                        await navigator.clipboard.write(data);
+                        showToast(`Gambar disalin! Silakan "Paste" (Ctrl+V) di WA.`);
+                    } catch (err) {
+                        console.warn('Gagal copy gambar ke clipboard', err);
+                        showToast(`Membuka WA... (Browser tidak mendukung auto-copy gambar)`);
+                    }
 
-            if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
-                // Jika nomor WA tersedia, buka tab WhatsApp
-                const encodedText = encodeURIComponent(template);
-                const waUrl = `https://wa.me/${noWaStr}?text=${encodedText}`;
-                window.open(waUrl, '_blank');
-                showToast(`Membuka WhatsApp untuk ${shortName}...`);
-            } else {
-                // Jika tidak ada nomor WA, hanya copy teks
-                showToast(`Nomor WA tidak ada. Teks ucapan telah disalin!`);
+                    // Membuka tab WhatsApp
+                    const encodedText = encodeURIComponent(template);
+                    let waUrl = '';
+                    if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
+                        waUrl = `https://wa.me/${noWaStr}?text=${encodedText}`;
+                    } else {
+                        waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+                    }
+                    
+                    setTimeout(() => {
+                        window.open(waUrl, '_blank');
+                    }, 1500); // Jeda agar toast terbaca
+
+                }, 'image/png');
+                
+            } catch(e) {
+                console.error(e);
+                alert('Terjadi kesalahan saat memproses gambar.');
             }
         }
 
@@ -468,7 +478,9 @@
 
                 let eventsHTML = `<div class="flex-1 flex flex-col gap-0.5 md:gap-1 z-10 relative w-full overflow-y-auto hide-scroll pb-1">`;
                 
-                daysBirthdays.forEach((b, index) => {
+                const maxDisplay = 2;
+                
+                daysBirthdays.slice(0, maxDisplay).forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
 
                     eventsHTML += `
@@ -480,6 +492,10 @@
                         </div>
                     `;
                 });
+                
+                if (daysBirthdays.length > maxDisplay) {
+                    eventsHTML += `<div class="text-[7px] md:text-[9px] text-blue-800 font-extrabold text-center mt-0.5 bg-white/60 rounded py-0.5 shadow-sm">+${daysBirthdays.length - maxDisplay} lagi</div>`;
+                }
                 
                 eventsHTML += `</div>`;
 
@@ -545,8 +561,8 @@
                                 <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="flex-1 sm:flex-none w-auto bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-2 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-yellow-200 transition-transform transform hover:scale-105 border border-yellow-500 gap-1.5 w-full sm:w-auto">
                                     <i class="fas fa-image text-sm"></i> <span class="hidden xl:inline">Flyer</span>
                                 </button>
-                                <button onclick="shareToWA('${safeName}', '${safeWa}')" class="flex-1 sm:flex-none w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-2 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-105 border border-[#1DA851] gap-1.5 w-full sm:w-auto">
-                                    <i class="fab fa-whatsapp text-sm"></i> <span class="hidden xl:inline">Teks</span>
+                                <button onclick="shareToWA('${safeName}', '${safeWa}', '${formattedDate}')" class="flex-1 sm:flex-none w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-2 rounded-lg flex items-center justify-center font-bold text-xs shadow-md shadow-[#25D366]/30 transition-transform transform hover:scale-105 border border-[#1DA851] gap-1.5 w-full sm:w-auto">
+                                    <i class="fab fa-whatsapp text-sm"></i> <span class="hidden xl:inline">WA</span>
                                 </button>
                             </div>
                         </div>
@@ -638,8 +654,8 @@
                                     <button onclick="downloadFlyer('${safeName}', '${formattedDate}')" class="flex-1 sm:flex-none w-auto bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-yellow-200 transform hover:-translate-y-0.5 border border-yellow-500">
                                         <i class="fas fa-image text-sm md:text-base"></i> Flyer
                                     </button>
-                                    <button onclick="shareToWA('${safeName}', '${safeWa}')" class="flex-1 sm:flex-none w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
-                                        <i class="fab fa-whatsapp text-sm md:text-base"></i> Teks
+                                    <button onclick="shareToWA('${safeName}', '${safeWa}', '${formattedDate}')" class="flex-1 sm:flex-none w-auto bg-[#25D366] hover:bg-[#1DA851] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/30 transform hover:-translate-y-0.5 border border-[#1DA851]">
+                                        <i class="fab fa-whatsapp text-sm md:text-base"></i> WA
                                     </button>
                                 </div>
                             </div>
