@@ -244,8 +244,7 @@
             let shortName = namaStr.split(' (')[0].trim();
             if(!shortName) shortName = namaStr; 
             
-            // Unicode emotikon: 🥳 (\uD83E\uDD73), 🙏 (\uD83D\uDE4F), 🙌 (\uD83D\uDE4C)
-            const template = `Selamat Ulang Tahun, ${shortName}! \uD83E\uDD73 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! \uD83D\uDE4F\uD83D\uDE4C`;
+            const template = `Selamat Ulang Tahun, ${shortName}! 🥳 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! 🙏🙌`;
             
             const textArea = document.createElement("textarea");
             textArea.value = template;
@@ -265,65 +264,72 @@
         }
 
         // ==========================================
-        // BUKA LINK WHATSAPP & AUTO-COPY GAMBAR
+        // BUKA LINK WHATSAPP & COPY TEKS (Desktop Friendly)
         // ==========================================
         async function shareToWA(namaStr, noWaStr, tanggalLahir) {
             let shortName = namaStr.split(' (')[0].trim();
             if(!shortName) shortName = namaStr; 
             
-            // Gunakan Unicodes murni agar emotikon tidak corrupt
-            const template = `Selamat Ulang Tahun, ${shortName}! \uD83E\uDD73  kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! \uD83D\uDE4F\uD83D\uDE4C`;
+            const template = `Selamat Ulang Tahun, ${shortName}! 🥳 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! 🙏🙌`;
             
             try {
                 showToast('Menyiapkan gambar & teks ucapan...');
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
                 canvas.toBlob(async (blob) => {
-                    let copySuccess = false;
-                    const file = new File([blob], `Flyer_Ultah_${shortName}.png`, { type: 'image/png' });
+                    const file = new File([blob], `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`, { type: 'image/png' });
 
-                    // 1. Coba fitur Web Share modern (Sangat sukses di Mobile / Windows 11 / Mac)
+                    // 1. Coba fitur Web Share API (Berjalan sempurna di Smartphone / PWA)
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
                                 files: [file],
-                                text: template,
+                                text: template, // Teks otomatis menjadi caption di HP
                                 title: 'Ucapan Ulang Tahun'
                             });
-                            // Jika berhasil share native, langsung hentikan fungsi disini
-                            return; 
+                            return; // Selesai jika share HP berhasil
                         } catch (err) {
-                            console.log("Share dibatalkan atau tidak disupport penuh, lanjut ke metode fallback...");
+                            console.log("Share native gagal/dibatalkan, lanjut ke mode Desktop...");
                         }
                     }
 
-                    // 2. Metode Cadangan (Buka WA Web/App + Copy Image)
+                    // 2. Mode Desktop: Trik Copy Teks + Download Gambar
+                    // WA Web tidak mengizinkan URL menempelkan teks dan gambar sekaligus secara otomatis.
+                    
+                    // A. Copy Teks Ucapannya ke Clipboard
+                    const textArea = document.createElement("textarea");
+                    textArea.value = template;
+                    textArea.style.position = "fixed";
+                    textArea.style.opacity = "0";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
                     try {
-                        const data = [new ClipboardItem({ 'image/png': blob })];
-                        await navigator.clipboard.write(data);
-                        copySuccess = true;
+                        document.execCommand('copy');
                     } catch (err) {
-                        console.warn('Gagal copy gambar ke clipboard', err);
+                        console.warn('Gagal copy teks', err);
                     }
+                    document.body.removeChild(textArea);
 
-                    // Setup link wa.me untuk teks ucapan
-                    const encodedText = encodeURIComponent(template);
+                    // B. Download Gambarnya
+                    const link = document.createElement('a');
+                    link.download = `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    // C. Siapkan Link WA
                     let waUrl = '';
                     if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
-                        waUrl = `https://wa.me/${noWaStr}?text=${encodedText}`;
+                        waUrl = `https://wa.me/${noWaStr}`; 
+                        // Catatan: ?text= sengaja dihilangkan agar teks di clipboard bisa di-paste di kolom caption gambar
                     } else {
-                        waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+                        waUrl = `https://api.whatsapp.com/send`;
                     }
                     
-                    // Beri tahu pengguna untuk Paste
-                    if (copySuccess) {
-                        alert(`GAMBAR BERHASIL DISALIN!\n\nKarena aturan keamanan WhatsApp, gambar tidak bisa otomatis terlampir di link.\n\nLANGKAH-LANGKAH:\n1. Tekan OK, Tab WhatsApp akan terbuka.\n2. Klik pada kolom ketik pesan di WhatsApp.\n3. Tekan CTRL + V (atau Klik Kanan -> Tempel/Paste).\n\nGambar Flyer & Teks akan muncul bersamaan!`);
-                    } else {
-                        // Jika copy gambar gagal (karena batasan browser), copy teksnya saja
-                        copyGreeting(namaStr);
-                        alert(`Teks ucapan berhasil disalin!\n\n(Browser Anda mencegah penyalinan gambar otomatis. Silakan unduh gambar flyer melalui tombol "Flyer" lalu kirim secara manual ke WA)`);
-                    }
+                    // D. Tampilkan instruksi yang jelas kepada pengguna
+                    alert(`✅ Teks ucapan telah disalin (Copy)!\n✅ Gambar flyer telah diunduh (Download)!\n\nCARA KIRIM KE WA:\n1. Klik OK untuk buka WhatsApp.\n2. Tarik/Lampirkan gambar flyer yang baru diunduh ke dalam chat WA.\n3. Klik di kolom Caption (Tambah Keterangan), lalu tekan CTRL+V (Paste).\n4. Kirim!`);
 
+                    // E. Buka tab WhatsApp
                     window.open(waUrl, '_blank');
 
                 }, 'image/png');
@@ -535,7 +541,6 @@
                 daysBirthdays.slice(0, maxDisplay).forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
 
-                    // Tidak lagi menampilkan usianya di kalender
                     eventsHTML += `
                         <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded-sm shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-start items-start shrink-0">
                             <div class="flex items-start gap-1 min-w-0 flex-1">
@@ -647,7 +652,7 @@
             }, 300); 
         }
 
-        // Tampilan Modal Detail Hari - Anti Potong
+        // Tampilan Modal Detail Hari
         function showDayDetails(day, monthName, daysBirthdays) {
             document.getElementById('dayModalTitle').innerText = `${day} ${monthName}`;
             const content = document.getElementById('dayModalContent');
