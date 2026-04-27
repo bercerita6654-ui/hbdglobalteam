@@ -238,13 +238,26 @@
         }
 
         // ==========================================
-        // COPY TEXT WA SAJA
+        // PEMBUAT TEKS UCAPAN MENGGUNAKAN KODE EMOTIKON 
+        // (Dijamin 100% tidak menjadi tanda tanya di WA)
         // ==========================================
-        function copyGreeting(namaStr) {
+        function getMessageTemplate(namaStr) {
             let shortName = namaStr.split(' (')[0].trim();
             if(!shortName) shortName = namaStr; 
             
-            const template = `Selamat Ulang Tahun, ${shortName}! 🥳 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! 🙏🙌`;
+            // Menggunakan Unicode desimal murni yang diterjemahkan langsung oleh JS (Bypass masalah encoding file)
+            const eParty = String.fromCodePoint(129395); // 🥳
+            const ePray = String.fromCodePoint(128591);  // 🙏
+            const eHands = String.fromCodePoint(128588); // 🙌
+            
+            return `Selamat Ulang Tahun, ${shortName}! ${eParty} kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! ${ePray}${eHands}`;
+        }
+
+        // ==========================================
+        // COPY TEXT WA SAJA
+        // ==========================================
+        function copyGreeting(namaStr) {
+            const template = getMessageTemplate(namaStr);
             
             const textArea = document.createElement("textarea");
             textArea.value = template;
@@ -256,6 +269,7 @@
             
             try {
                 document.execCommand('copy');
+                let shortName = namaStr.split(' (')[0].trim() || namaStr;
                 showToast(`Teks ucapan untuk ${shortName} disalin!`);
             } catch (err) {
                 alert('Browser Anda tidak mendukung fitur copy otomatis.');
@@ -267,25 +281,21 @@
         // BUKA LINK WHATSAPP & DOWNLOAD GAMBAR
         // ==========================================
         async function shareToWA(namaStr, noWaStr, tanggalLahir) {
-            let shortName = namaStr.split(' (')[0].trim();
-            if(!shortName) shortName = namaStr; 
-            
-            // Format Teks Asli dengan Emotikon (Bukan kode unicode escape)
-            const template = `Selamat Ulang Tahun, ${shortName}! 🥳 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! 🙏🙌`;
+            const template = getMessageTemplate(namaStr);
+            let shortName = namaStr.split(' (')[0].trim() || namaStr;
             
             try {
                 showToast('Menyiapkan gambar & membuka WA...');
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
                 canvas.toBlob(async (blob) => {
-                    
-                    // 1. Download Gambarnya
+                    // 1. Otomatis Download Gambarnya
                     const link = document.createElement('a');
                     link.download = `Flyer_Ultah_${shortName.replace(/\s+/g, '_')}.png`;
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     
-                    // 2. Coba Copy Image ke Clipboard (Untuk Paste instan di WA Web)
+                    // 2. Coba Copy Image ke Clipboard (Agar bisa langsung CTRL+V di WA)
                     try {
                         const data = [new ClipboardItem({ 'image/png': blob })];
                         await navigator.clipboard.write(data);
@@ -293,7 +303,7 @@
                         console.warn('Browser mencegah copy gambar otomatis', err);
                     }
 
-                    // 3. Setup Link WA (Teks OTOMATIS terisi lewat parameter ?text=)
+                    // 3. Setup Link WA dengan Parameter Teks (Emotikon di-encode dengan aman)
                     const encodedText = encodeURIComponent(template);
                     let waUrl = '';
                     if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
@@ -301,6 +311,9 @@
                     } else {
                         waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
                     }
+
+                    // Notifikasi bantuan untuk user
+                    alert(`✅ Gambar Flyer berhasil diunduh dan disalin!\n\nLangkah berikutnya:\n1. Klik OK untuk melanjutkan ke WhatsApp.\n2. Di kolom chat WA, tekan [CTRL + V] atau Klik Kanan -> Paste.\n\nGambar Flyer beserta Teks Ucapan akan langsung muncul!`);
 
                     // 4. Buka tab WhatsApp
                     window.open(waUrl, '_blank');
@@ -312,7 +325,6 @@
                 alert('Terjadi kesalahan saat memproses data ke WhatsApp.');
             }
         }
-
 
         // ==========================================
         // GENERATOR FLYER OTOMATIS (CANVAS API)
