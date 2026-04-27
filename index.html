@@ -238,31 +238,75 @@
         }
 
         // ==========================================
+        // COPY TEXT WA SAJA
+        // ==========================================
+        function copyGreeting(namaStr) {
+            let shortName = namaStr.split(' (')[0].trim();
+            if(!shortName) shortName = namaStr; 
+            
+            // Unicode emotikon: 🥳 (\uD83E\uDD73), 🙏 (\uD83D\uDE4F), 🙌 (\uD83D\uDE4C)
+            const template = `Selamat Ulang Tahun, ${shortName}! \uD83E\uDD73 kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! \uD83D\uDE4F\uD83D\uDE4C`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = template;
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast(`Teks ucapan untuk ${shortName} disalin!`);
+            } catch (err) {
+                alert('Browser Anda tidak mendukung fitur copy otomatis.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // ==========================================
         // BUKA LINK WHATSAPP & AUTO-COPY GAMBAR
         // ==========================================
         async function shareToWA(namaStr, noWaStr, tanggalLahir) {
             let shortName = namaStr.split(' (')[0].trim();
             if(!shortName) shortName = namaStr; 
             
-            // Format emotikon yang diminta
-            const template = `Selamat Ulang Tahun, ${shortName}! 🥳  kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! 🙏🙌`;
+            // Gunakan Unicodes murni agar emotikon tidak corrupt
+            const template = `Selamat Ulang Tahun, ${shortName}! \uD83E\uDD73  kami Keluarga besar GLOBAL MART mendoakan yang terbaik untukmu. Semoga sehat selalu, panjang umur, dan terus semangat berkarya! \uD83D\uDE4F\uD83D\uDE4C`;
             
             try {
-                showToast('Menyiapkan gambar flyer...');
+                showToast('Menyiapkan gambar & teks ucapan...');
                 const canvas = await getFlyerCanvas(namaStr, tanggalLahir);
                 
                 canvas.toBlob(async (blob) => {
-                    // Menyalin gambar ke Clipboard
+                    let copySuccess = false;
+                    const file = new File([blob], `Flyer_Ultah_${shortName}.png`, { type: 'image/png' });
+
+                    // 1. Coba fitur Web Share modern (Sangat sukses di Mobile / Windows 11 / Mac)
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                text: template,
+                                title: 'Ucapan Ulang Tahun'
+                            });
+                            // Jika berhasil share native, langsung hentikan fungsi disini
+                            return; 
+                        } catch (err) {
+                            console.log("Share dibatalkan atau tidak disupport penuh, lanjut ke metode fallback...");
+                        }
+                    }
+
+                    // 2. Metode Cadangan (Buka WA Web/App + Copy Image)
                     try {
                         const data = [new ClipboardItem({ 'image/png': blob })];
                         await navigator.clipboard.write(data);
-                        showToast(`Gambar disalin! Silakan "Paste" (Ctrl+V) di WA.`);
+                        copySuccess = true;
                     } catch (err) {
                         console.warn('Gagal copy gambar ke clipboard', err);
-                        showToast(`Membuka WA... (Browser tidak mendukung auto-copy gambar)`);
                     }
 
-                    // Membuka tab WhatsApp
+                    // Setup link wa.me untuk teks ucapan
                     const encodedText = encodeURIComponent(template);
                     let waUrl = '';
                     if (noWaStr && noWaStr !== "undefined" && noWaStr !== "") {
@@ -271,17 +315,25 @@
                         waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
                     }
                     
-                    setTimeout(() => {
-                        window.open(waUrl, '_blank');
-                    }, 1500); // Jeda agar toast terbaca
+                    // Beri tahu pengguna untuk Paste
+                    if (copySuccess) {
+                        alert(`GAMBAR BERHASIL DISALIN!\n\nKarena aturan keamanan WhatsApp, gambar tidak bisa otomatis terlampir di link.\n\nLANGKAH-LANGKAH:\n1. Tekan OK, Tab WhatsApp akan terbuka.\n2. Klik pada kolom ketik pesan di WhatsApp.\n3. Tekan CTRL + V (atau Klik Kanan -> Tempel/Paste).\n\nGambar Flyer & Teks akan muncul bersamaan!`);
+                    } else {
+                        // Jika copy gambar gagal (karena batasan browser), copy teksnya saja
+                        copyGreeting(namaStr);
+                        alert(`Teks ucapan berhasil disalin!\n\n(Browser Anda mencegah penyalinan gambar otomatis. Silakan unduh gambar flyer melalui tombol "Flyer" lalu kirim secara manual ke WA)`);
+                    }
+
+                    window.open(waUrl, '_blank');
 
                 }, 'image/png');
                 
             } catch(e) {
                 console.error(e);
-                alert('Terjadi kesalahan saat memproses gambar.');
+                alert('Terjadi kesalahan saat memproses data ke WhatsApp.');
             }
         }
+
 
         // ==========================================
         // GENERATOR FLYER OTOMATIS (CANVAS API)
@@ -483,6 +535,7 @@
                 daysBirthdays.slice(0, maxDisplay).forEach((b, index) => {
                     let shortName = b.nama.split(' (')[0].trim() || b.nama;
 
+                    // Tidak lagi menampilkan usianya di kalender
                     eventsHTML += `
                         <div class="w-full bg-blue-600 hover:bg-blue-500 text-white px-1 md:px-1.5 py-0.5 md:py-1 rounded-sm shadow-sm border border-blue-500 transform transition-transform group-hover:translate-x-0.5 flex justify-start items-start shrink-0">
                             <div class="flex items-start gap-1 min-w-0 flex-1">
